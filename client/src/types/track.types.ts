@@ -10,16 +10,15 @@ export interface TrackBounds {
   maxY: number;
 }
 
+export interface DRSZoneSegment {
+  startIndex: number;
+  endIndex: number;
+}
+
 export interface TrackData {
   innerBoundary: Point[];
   outerBoundary: Point[];
   centerLine: Point[];
   bounds: TrackBounds;
-}
-
-export interface DRSZone {
-  start: Point;
-  end: Point;
-  startIndex: number;
-  endIndex: number;
+  drsZones?: DRSZoneSegment[];
 }

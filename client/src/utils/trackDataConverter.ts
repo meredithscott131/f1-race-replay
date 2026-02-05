@@ -5,7 +5,10 @@ import type { TrackFrame } from '../types/track-api.types';
  * Build track from lightweight track frames (first lap only)
  * Improved version with better smoothing and boundary generation
  */
-export function buildTrackFromFrames(frames: TrackFrame[]): TrackData | null {
+export function buildTrackFromFrames(
+  frames: TrackFrame[], 
+  drsZones?: Array<{ start_index: number; end_index: number }>
+): TrackData | null {
   if (!frames || frames.length < 10) {
     console.error('Not enough frames to build track');
     return null;
@@ -19,7 +22,7 @@ export function buildTrackFromFrames(frames: TrackFrame[]): TrackData | null {
   // Remove duplicate consecutive points
   centerLine = removeDuplicates(centerLine);
   
-  // Close the loop if needed (connect last point to first)
+  // Close the loop if needed
   if (centerLine.length > 0) {
     const first = centerLine[0];
     const last = centerLine[centerLine.length - 1];
@@ -27,7 +30,6 @@ export function buildTrackFromFrames(frames: TrackFrame[]): TrackData | null {
       Math.pow(last.x - first.x, 2) + Math.pow(last.y - first.y, 2)
     );
     
-    // If last point is far from first, close the loop
     if (distance > 50) {
       centerLine.push({ ...first });
     }
@@ -35,7 +37,6 @@ export function buildTrackFromFrames(frames: TrackFrame[]): TrackData | null {
 
   console.log(`Center line has ${centerLine.length} points after processing`);
 
-  // Calculate bounds with some padding
   const xs = centerLine.map(p => p.x);
   const ys = centerLine.map(p => p.y);
   
@@ -44,12 +45,21 @@ export function buildTrackFromFrames(frames: TrackFrame[]): TrackData | null {
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
 
-  // Build inner and outer boundaries with improved offset calculation
-  const trackWidth = 150; // Reduced from 200 for better fit
+  const trackWidth = 150;
   const innerBoundary = offsetPathImproved(centerLine, -trackWidth / 2);
   const outerBoundary = offsetPathImproved(centerLine, trackWidth / 2);
 
   console.log(`Track bounds: X[${minX.toFixed(0)}, ${maxX.toFixed(0)}], Y[${minY.toFixed(0)}, ${maxY.toFixed(0)}]`);
+  
+  // Convert DRS zones if provided
+  const drsZoneSegments = drsZones?.map(zone => ({
+    startIndex: zone.start_index,
+    endIndex: zone.end_index
+  }));
+
+  if (drsZoneSegments) {
+    console.log(`DRS Zones: ${drsZoneSegments.length} zones found`);
+  }
 
   return {
     innerBoundary,
@@ -61,6 +71,7 @@ export function buildTrackFromFrames(frames: TrackFrame[]): TrackData | null {
       minY,
       maxY,
     },
+    drsZones: drsZoneSegments,
   };
 }
 

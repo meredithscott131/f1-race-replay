@@ -21,6 +21,7 @@ from core.cache_manager import get_cache_manager, CacheManager
 from core.telemetry_processor import TelemetryProcessor, process_race_telemetry
 from core.time import format_time, parse_time_string
 from core.tyres import get_tyre_compound_int, get_tyre_compound_str
+from core.drs_zones import get_drs_zones_for_session, extract_drs_zones_from_telemetry
 
 __all__ = [
     # F1 Data functions
@@ -29,18 +30,16 @@ __all__ = [
     "get_driver_colors",
     "get_circuit_rotation",
     "get_race_telemetry",
-    "get_qualifying_results",
-    "get_driver_quali_telemetry",
-    "get_quali_telemetry",
     "get_race_weekends_by_year",
-    "list_rounds",
-    "list_sprints",
     # Cache management
     "get_cache_manager",
     "CacheManager",
     # Telemetry processing
     "TelemetryProcessor",
     "process_race_telemetry",
+    # DRS zones
+    "get_drs_zones_for_session",
+    "extract_drs_zones_from_telemetry",
     # Utilities
     "format_time",
     "parse_time_string",

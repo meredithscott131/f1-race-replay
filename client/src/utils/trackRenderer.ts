@@ -70,11 +70,72 @@ export class TrackRenderer {
     // Draw inner boundary
     this.drawPath(this.trackData.innerBoundary, '#666666', 4);
 
-    // Draw center line (optional, for reference)
-    // this.drawPath(this.trackData.centerLine, '#444444', 2, true);
+    // Draw DRS zones (green highlights on outer boundary)
+    this.drawDRSZones();
 
-    // Draw finish line
+    // Draw finish line (checkered)
     this.drawFinishLine();
+  }
+
+  private drawDRSZones() {
+    if (!this.trackData) {
+      console.log('No track data for DRS zones');
+      return;
+    }
+    
+    if (!this.trackData.drsZones) {
+      console.log('No DRS zones in track data');
+      return;
+    }
+    
+    if (this.trackData.drsZones.length === 0) {
+      console.log('DRS zones array is empty');
+      return;
+    }
+
+    console.log(`Drawing ${this.trackData.drsZones.length} DRS zones`);
+    const drsColor = '#00FF00'; // Bright green
+
+    for (let i = 0; i < this.trackData.drsZones.length; i++) {
+      const zone = this.trackData.drsZones[i];
+      const startIdx = zone.startIndex;
+      const endIdx = zone.endIndex;
+
+      console.log(`DRS Zone ${i}: indices ${startIdx} to ${endIdx}, outer boundary length: ${this.trackData.outerBoundary.length}`);
+
+      if (startIdx >= this.trackData.outerBoundary.length || endIdx >= this.trackData.outerBoundary.length) {
+        console.warn(`DRS zone ${i} indices out of bounds`);
+        continue;
+      }
+
+      // Extract the segment of outer boundary for this DRS zone
+      const zoneSegment = this.trackData.outerBoundary.slice(startIdx, endIdx + 1);
+
+      console.log(`DRS Zone ${i}: ${zoneSegment.length} points`);
+
+      if (zoneSegment.length < 2) {
+        console.warn(`DRS zone ${i} has too few points`);
+        continue;
+      }
+
+      // Draw as a thicker green line on top of the track
+      this.ctx.strokeStyle = drsColor;
+      this.ctx.lineWidth = 8;
+      this.ctx.setLineDash([]);
+
+      this.ctx.beginPath();
+
+      const firstPoint = this.worldToScreen(zoneSegment[0]);
+      this.ctx.moveTo(firstPoint.x, firstPoint.y);
+
+      for (let j = 1; j < zoneSegment.length; j++) {
+        const screenPoint = this.worldToScreen(zoneSegment[j]);
+        this.ctx.lineTo(screenPoint.x, screenPoint.y);
+      }
+
+      this.ctx.stroke();
+      console.log(`✅ Drew DRS zone ${i}`);
+    }
   }
 
   private drawPath(
@@ -114,19 +175,43 @@ export class TrackRenderer {
     const innerStart = this.worldToScreen(this.trackData.innerBoundary[0]);
     const outerStart = this.worldToScreen(this.trackData.outerBoundary[0]);
 
+    // Extend the line slightly beyond track boundaries for visibility
+    const dx = outerStart.x - innerStart.x;
+    const dy = outerStart.y - innerStart.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    
+    if (length === 0) return;
+
+    // Extend 20 pixels on each side
+    const extension = 20;
+    const extendX = (dx / length) * extension;
+    const extendY = (dy / length) * extension;
+
+    const extendedInner = {
+      x: innerStart.x - extendX,
+      y: innerStart.y - extendY,
+    };
+
+    const extendedOuter = {
+      x: outerStart.x + extendX,
+      y: outerStart.y + extendY,
+    };
+
     // Draw checkered pattern
     const numSquares = 20;
-    const dx = (outerStart.x - innerStart.x) / numSquares;
-    const dy = (outerStart.y - innerStart.y) / numSquares;
+    const stepX = (extendedOuter.x - extendedInner.x) / numSquares;
+    const stepY = (extendedOuter.y - extendedInner.y) / numSquares;
 
     for (let i = 0; i < numSquares; i++) {
-      const x1 = innerStart.x + dx * i;
-      const y1 = innerStart.y + dy * i;
-      const x2 = innerStart.x + dx * (i + 1);
-      const y2 = innerStart.y + dy * (i + 1);
+      const x1 = extendedInner.x + stepX * i;
+      const y1 = extendedInner.y + stepY * i;
+      const x2 = extendedInner.x + stepX * (i + 1);
+      const y2 = extendedInner.y + stepY * (i + 1);
 
+      // Alternate between white and black
       this.ctx.strokeStyle = i % 2 === 0 ? '#FFFFFF' : '#000000';
       this.ctx.lineWidth = 6;
+      
       this.ctx.beginPath();
       this.ctx.moveTo(x1, y1);
       this.ctx.lineTo(x2, y2);

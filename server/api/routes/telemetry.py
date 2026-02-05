@@ -195,45 +195,38 @@ async def clear_all_cache():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+from core.drs_zones import get_drs_zones_for_session
+
 @router.get("/track/{year}/{round}")
 async def get_track_data(
     year: int = Path(..., ge=2018, le=2025),
     round: int = Path(..., ge=1, le=24),
     session_type: str = Query("R", regex="^(R|S)$")
 ):
-    """Get track shape data (lightweight - only first lap)"""
+    """Get track shape data with DRS zones"""
     try:
         logger.info(f"Loading track data: {year} R{round} {session_type}")
         
-        # Check cache first
         cached_data = cache.get(year, round, session_type)
         
         if not cached_data:
-            # No cache - process the data
             logger.info("No cache found, processing telemetry...")
             session = load_session(year, round, session_type)
             telemetry_data = get_race_telemetry(session, session_type)
             cached_data = telemetry_data
         
-        logger.info("Using cached data to extract track")
-        
         frames = cached_data.get("frames", [])
-        
         logger.info(f"Total frames available: {len(frames)}")
         
-        # Extract first lap only
+        # Extract first lap for track shape
         first_lap_frames = []
         first_driver = None
         
-        for i, frame in enumerate(frames):
-            if not isinstance(frame, dict):
-                continue
-                
-            if "drivers" not in frame:
+        for frame in frames:
+            if not isinstance(frame, dict) or "drivers" not in frame:
                 continue
             
             drivers = frame["drivers"]
-            
             if not isinstance(drivers, dict):
                 continue
             
@@ -251,24 +244,35 @@ async def get_track_data(
                         "y": driver_data["y"],
                     })
                 elif driver_data.get("lap", 1) > 1:
-                    break  # Stop after first lap
+                    break
         
         logger.info(f"✅ Extracted {len(first_lap_frames)} frames for track rendering")
         
-        if len(first_lap_frames) == 0:
-            raise HTTPException(status_code=500, detail="No track data could be extracted")
+        # Hardcoded DRS zones for Bahrain (approximate positions)
+        # DRS Zone 1: ~15-25% around the lap (Turn 1 exit to Turn 4)
+        # DRS Zone 2: ~85-95% around the lap (Back straight)
+        total_points = len(first_lap_frames)
+        drs_zones = [
+            {
+                "start_index": int(total_points * 0.15),
+                "end_index": int(total_points * 0.25)
+            },
+            {
+                "start_index": int(total_points * 0.85),
+                "end_index": int(total_points * 0.95)
+            }
+        ]
+        
+        logger.info(f"✅ Using {len(drs_zones)} hardcoded DRS zones for Bahrain")
         
         # Get session info
-        if "session_info" in cached_data:
-            session_info = cached_data["session_info"]
-            circuit_rotation = cached_data.get("circuit_rotation", 0.0)
-        else:
-            session = load_session(year, round, session_type)
-            session_info = _build_session_info(session, year, round)
-            circuit_rotation = get_circuit_rotation(session)
+        session = load_session(year, round, session_type)
+        session_info = _build_session_info(session, year, round)
+        circuit_rotation = get_circuit_rotation(session)
         
         return {
             "frames": first_lap_frames,
+            "drs_zones": drs_zones,
             "circuit_rotation": circuit_rotation,
             "session_info": session_info,
         }
@@ -281,6 +285,7 @@ async def get_track_data(
             status_code=500,
             detail=f"Failed to load track data: {str(e)}"
         )
+    
 
 def _build_session_info(session, year: int, round: int) -> dict:
     """Helper function to build session info dictionary"""
