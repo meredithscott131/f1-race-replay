@@ -2,7 +2,7 @@
 Telemetry data endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, Path
 from typing import Optional
 import logging
 
@@ -27,60 +27,38 @@ settings = get_settings()
 cache = get_cache_manager()
 
 
-@router.get("/race/{year}/{round}", response_model=TelemetryData)
+@router.get("/race/{year}/{round}")  # Remove response_model=TelemetryData
 async def get_race_telemetry_data(
-    year: int = Query(..., ge=settings.min_year, le=settings.max_year),
-    round: int = Query(..., ge=1, le=24),
-    session_type: str = Query(
-        "R",
-        regex="^(R|S)$",
-        description="Session type: R=Race, S=Sprint"
-    ),
-    force_refresh: bool = Query(False, description="Force refresh from source")
+    year: int = Path(..., ge=2018, le=2025),
+    round: int = Path(..., ge=1, le=24),
+    session_type: str = Query("R", regex="^(R|S)$"),
+    force_refresh: bool = Query(False)
 ):
-    """
-    Get race telemetry data for a specific session
-    
-    Returns complete telemetry data including:
-    - Frame-by-frame driver positions
-    - Track status events (flags, safety car)
-    - Driver colors
-    - Weather data
-    - Session information
-    
-    Data is cached for faster subsequent requests.
-    """
+    """Get race telemetry data"""
     try:
         logger.info(f"Loading telemetry: {year} R{round} {session_type}")
         
-        # Check cache first (unless force refresh)
         if not force_refresh:
             cached_data = cache.get(year, round, session_type)
             if cached_data:
                 logger.info("Returning cached telemetry data")
                 
-                # Add session_info if not present (backwards compatibility)
                 if "session_info" not in cached_data:
                     session = load_session(year, round, session_type)
                     cached_data["session_info"] = _build_session_info(session, year, round)
                 
                 return cached_data
         
-        # Load fresh data
         logger.info("Loading fresh telemetry data from FastF1...")
         session = load_session(year, round, session_type)
         
-        # Get telemetry (this may take time)
         telemetry_data = get_race_telemetry(session, session_type)
         
-        # Get additional data
         driver_colors = get_driver_colors(session)
         circuit_rotation = get_circuit_rotation(session)
         
-        # Build session info
         session_info = _build_session_info(session, year, round)
         
-        # Combine all data
         response_data = {
             "frames": telemetry_data["frames"],
             "track_statuses": telemetry_data["track_statuses"],
@@ -100,19 +78,13 @@ async def get_race_telemetry_data(
             detail=f"Failed to load telemetry data: {str(e)}"
         )
 
-
 @router.get("/status/{year}/{round}", response_model=TelemetryStatusResponse)
 async def get_telemetry_status(
-    year: int = Query(..., ge=settings.min_year, le=settings.max_year),
-    round: int = Query(..., ge=1, le=24),
+    year: int = Path(..., ge=2018, le=2025),  # Changed to Path
+    round: int = Path(..., ge=1, le=24),  # Changed to Path
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$")
 ):
-    """
-    Check if telemetry data is cached and available
-    
-    Returns cache status without loading the full data.
-    Useful for UI to show if data needs to be loaded.
-    """
+    """Check if telemetry data is cached"""
     try:
         exists = cache.exists(year, round, session_type)
         
@@ -138,12 +110,12 @@ async def get_telemetry_status(
 
 
 @router.get("/cache/info/{year}/{round}", response_model=CacheInfoResponse)
-async def get_cache_info(
-    year: int,
-    round: int,
+async def get_cache_info_endpoint(
+    year: int = Path(...),  # Changed to Path
+    round: int = Path(...),  # Changed to Path
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$")
 ):
-    """Get detailed cache information for a session"""
+    """Get detailed cache information"""
     try:
         info = cache.get_cache_info(year, round, session_type)
         
@@ -165,11 +137,7 @@ async def get_cache_info(
 
 @router.get("/cache/list")
 async def list_cached_sessions():
-    """
-    List all cached telemetry sessions
-    
-    Returns information about all sessions currently in cache.
-    """
+    """List all cached sessions"""
     try:
         sessions = cache.list_cached_sessions()
         return {
@@ -183,15 +151,11 @@ async def list_cached_sessions():
 
 @router.delete("/cache/{year}/{round}")
 async def clear_session_cache(
-    year: int,
-    round: int,
+    year: int = Path(...),  # Changed to Path
+    round: int = Path(...),  # Changed to Path
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$")
 ):
-    """
-    Clear cache for a specific session
-    
-    Forces the next request to reload data from FastF1.
-    """
+    """Clear cache for a specific session"""
     try:
         success = cache.delete(year, round, session_type)
         
@@ -217,11 +181,7 @@ async def clear_session_cache(
 
 @router.delete("/cache/clear-all")
 async def clear_all_cache():
-    """
-    Clear all cached telemetry data
-    
-    WARNING: This will delete all cached sessions.
-    """
+    """Clear all cached telemetry data"""
     try:
         count = cache.clear_all()
         
@@ -235,6 +195,93 @@ async def clear_all_cache():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/track/{year}/{round}")
+async def get_track_data(
+    year: int = Path(..., ge=2018, le=2025),
+    round: int = Path(..., ge=1, le=24),
+    session_type: str = Query("R", regex="^(R|S)$")
+):
+    """Get track shape data (lightweight - only first lap)"""
+    try:
+        logger.info(f"Loading track data: {year} R{round} {session_type}")
+        
+        # Check cache first
+        cached_data = cache.get(year, round, session_type)
+        
+        if not cached_data:
+            # No cache - process the data
+            logger.info("No cache found, processing telemetry...")
+            session = load_session(year, round, session_type)
+            telemetry_data = get_race_telemetry(session, session_type)
+            cached_data = telemetry_data
+        
+        logger.info("Using cached data to extract track")
+        
+        frames = cached_data.get("frames", [])
+        
+        logger.info(f"Total frames available: {len(frames)}")
+        
+        # Extract first lap only
+        first_lap_frames = []
+        first_driver = None
+        
+        for i, frame in enumerate(frames):
+            if not isinstance(frame, dict):
+                continue
+                
+            if "drivers" not in frame:
+                continue
+            
+            drivers = frame["drivers"]
+            
+            if not isinstance(drivers, dict):
+                continue
+            
+            if not first_driver and drivers:
+                first_driver = list(drivers.keys())[0]
+                logger.info(f"Using driver: {first_driver} for track shape")
+            
+            if first_driver in drivers:
+                driver_data = drivers[first_driver]
+                
+                if driver_data.get("lap") == 1:
+                    first_lap_frames.append({
+                        "t": frame["t"],
+                        "x": driver_data["x"],
+                        "y": driver_data["y"],
+                    })
+                elif driver_data.get("lap", 1) > 1:
+                    break  # Stop after first lap
+        
+        logger.info(f"✅ Extracted {len(first_lap_frames)} frames for track rendering")
+        
+        if len(first_lap_frames) == 0:
+            raise HTTPException(status_code=500, detail="No track data could be extracted")
+        
+        # Get session info
+        if "session_info" in cached_data:
+            session_info = cached_data["session_info"]
+            circuit_rotation = cached_data.get("circuit_rotation", 0.0)
+        else:
+            session = load_session(year, round, session_type)
+            session_info = _build_session_info(session, year, round)
+            circuit_rotation = get_circuit_rotation(session)
+        
+        return {
+            "frames": first_lap_frames,
+            "circuit_rotation": circuit_rotation,
+            "session_info": session_info,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading track data: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load track data: {str(e)}"
+        )
+
 def _build_session_info(session, year: int, round: int) -> dict:
     """Helper function to build session info dictionary"""
     try:
@@ -245,7 +292,7 @@ def _build_session_info(session, year: int, round: int) -> dict:
             "year": year,
             "round": round,
             "date": str(session.event['EventDate'].date()),
-            "total_laps": None  # Will be filled by telemetry data
+            "total_laps": None
         }
     except Exception as e:
         logger.warning(f"Error building session info: {e}")

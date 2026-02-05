@@ -1,14 +1,10 @@
 """
 Session management endpoints
-
-Handles session-related operations and metadata.
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query, Path
 import logging
 
-from api.models.race import SessionType, SessionInfo
 from core.f1_data import load_session, get_circuit_rotation
 from config.settings import get_settings
 
@@ -19,19 +15,11 @@ settings = get_settings()
 
 @router.get("/info/{year}/{round}")
 async def get_session_info(
-    year: int = Query(..., ge=settings.min_year, le=settings.max_year),
-    round: int = Query(..., ge=1, le=24),
+    year: int = Path(..., ge=2018, le=2025),  # Changed to Path
+    round: int = Path(..., ge=1, le=24),  # Changed to Path
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$")
 ):
-    """
-    Get basic session information without loading full telemetry
-    
-    Returns metadata about the session including:
-    - Event name
-    - Circuit name
-    - Country
-    - Date
-    """
+    """Get basic session information"""
     try:
         logger.info(f"Loading session info: {year} R{round} {session_type}")
         
@@ -58,11 +46,7 @@ async def get_session_info(
 
 @router.get("/types")
 async def get_session_types():
-    """
-    Get available session types
-    
-    Returns list of valid session type codes.
-    """
+    """Get available session types"""
     return {
         "session_types": [
             {"code": "R", "name": "Race", "description": "Main race"},
@@ -75,17 +59,12 @@ async def get_session_types():
 
 @router.get("/validate/{year}/{round}")
 async def validate_session(
-    year: int = Query(..., ge=settings.min_year, le=settings.max_year),
-    round: int = Query(..., ge=1, le=24),
+    year: int = Path(..., ge=2018, le=2025),  # Changed to Path
+    round: int = Path(..., ge=1, le=24),  # Changed to Path
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$")
 ):
-    """
-    Validate if a session exists and can be loaded
-    
-    Useful for checking availability before attempting to load telemetry.
-    """
+    """Validate if a session exists"""
     try:
-        # Try to load the session
         session = load_session(year, round, session_type)
         
         return {
@@ -102,5 +81,4 @@ async def validate_session(
             "exists": False,
             "message": str(e)
         }
-    
     

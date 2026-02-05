@@ -2,7 +2,7 @@
 Race schedule and event endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Path, Query
 from typing import List
 import logging
 
@@ -19,8 +19,6 @@ settings = get_settings()
 async def get_available_years():
     """
     Get list of years with available F1 data
-    
-    Returns a list of years between min_year and max_year from settings.
     """
     try:
         years = settings.get_allowed_years()
@@ -32,22 +30,10 @@ async def get_available_years():
 
 @router.get("/schedule/{year}", response_model=List[RaceWeekend])
 async def get_race_schedule(
-    year: int = Query(
-        ...,
-        ge=settings.min_year,
-        le=settings.max_year,
-        description="Season year"
-    )
+    year: int = Path(..., ge=2018, le=2025, description="Season year")  # Changed Query to Path
 ):
     """
     Get race schedule for a specific year
-    
-    Returns all race weekends including:
-    - Round numbers
-    - Event names
-    - Dates
-    - Countries
-    - Event types (conventional, sprint, etc.)
     """
     try:
         logger.info(f"Fetching schedule for year {year}")
@@ -64,18 +50,15 @@ async def get_race_schedule(
 
 @router.get("/schedule/{year}/{round}", response_model=RaceWeekend)
 async def get_race_weekend(
-    year: int = Query(..., ge=settings.min_year, le=settings.max_year),
-    round: int = Query(..., ge=1, le=24, description="Round number")
+    year: int = Path(..., ge=2018, le=2025),  # Changed Query to Path
+    round: int = Path(..., ge=1, le=24, description="Round number")  # Changed Query to Path
 ):
     """
     Get details for a specific race weekend
-    
-    Returns information about a single race weekend.
     """
     try:
         events = get_race_weekends_by_year(year)
         
-        # Find the specific round
         weekend = next((e for e in events if e["round_number"] == round), None)
         
         if not weekend:
@@ -90,4 +73,4 @@ async def get_race_weekend(
     except Exception as e:
         logger.error(f"Error fetching round {round} for {year}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    
+

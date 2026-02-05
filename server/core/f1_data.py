@@ -1,5 +1,6 @@
 import os
 import sys
+from venv import logger
 import fastf1
 import fastf1.plotting
 from multiprocessing import Pool, cpu_count
@@ -8,11 +9,19 @@ import json
 import pickle
 
 from datetime import timedelta
+
+from typing import Dict, List, Any, Optional
 from core.telemetry_processor import process_race_telemetry as process_telemetry
 from core.time import parse_time_string, format_time
 from core.tyres import get_tyre_compound_int
 
 import pandas as pd
+
+from core.cache_manager import get_cache_manager
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 def enable_cache():
     # Check if cache folder exists
@@ -156,24 +165,38 @@ def get_circuit_rotation(session):
     circuit = session.get_circuit_info()
     return circuit.rotation
 
-def get_race_telemetry(session, session_type='R'):
-    """Get race telemetry using the processor"""
-    
-    # Check cache first
-    from core.cache_manager import get_cache_manager
+def get_race_telemetry(session, session_type: str = 'R') -> Dict[str, Any]:
+    """
+    Get race telemetry data (with caching)
+    """
     cache = get_cache_manager()
     
-    event_name = str(session).replace(' ', '_')
-    cache_suffix = 'sprint' if session_type == 'S' else 'race'
+    # Extract year and round from session
+    year = session.event['EventDate'].year
+    round_number = session.event['RoundNumber']
+    
+    # Check if we should bypass cache
+    bypass_cache = "--refresh-data" in sys.argv
     
     # Try to load from cache
-    # (cache logic here)
+    if not bypass_cache:
+        cached_data = cache.get(year, round_number, session_type)
+        if cached_data:
+            logger.info(f"Loaded {session_type} telemetry from cache")
+            return cached_data
     
-    # If not cached, process using the processor
+    logger.info(f"Processing {session_type} telemetry (not cached)...")
+    
+    # Process telemetry using the processor
     result = process_telemetry(session, session_type)
     
-    # Add additional data
+    # Add driver colors
     result['driver_colors'] = get_driver_colors(session)
+    
+    # **SAVE TO CACHE**
+    logger.info("Saving to cache...")
+    cache.set(year, round_number, session_type, result)
+    logger.info("Cache saved successfully!")
     
     return result
 

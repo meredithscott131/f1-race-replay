@@ -16,7 +16,7 @@ class DriverPosition(BaseModel):
     tyre: float = Field(..., description="Tyre compound (numeric)")
     position: int = Field(..., ge=1, le=20, description="Current position in race")
     speed: float = Field(..., ge=0, description="Speed in km/h")
-    gear: int = Field(..., ge=0, le=8, description="Current gear")
+    gear: int = Field(..., ge=-1, le=10, description="Current gear (-1=reverse, 0=neutral, 1-8=gears, 10=neutral in some cars)")  # Changed
     drs: int = Field(..., ge=0, description="DRS status")
     throttle: float = Field(..., ge=0, le=100, description="Throttle percentage")
     brake: float = Field(..., ge=0, le=100, description="Brake percentage")

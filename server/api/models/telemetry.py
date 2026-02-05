@@ -57,14 +57,6 @@ class Frame(BaseModel):
                         "throttle": 100.0,
                         "brake": 0.0
                     }
-                },
-                "weather": {
-                    "track_temp": 32.5,
-                    "air_temp": 28.0,
-                    "humidity": 45.0,
-                    "wind_speed": 12.5,
-                    "wind_direction": 180.0,
-                    "rain_state": "DRY"
                 }
             }
         }
@@ -73,8 +65,8 @@ class Frame(BaseModel):
 class TrackStatus(BaseModel):
     """Track status event (flags, safety car, etc.)"""
     status: str = Field(..., description="Status code")
-    start_time: float = Field(..., ge=0, description="Start time in seconds")
-    end_time: Optional[float] = Field(None, ge=0, description="End time in seconds")
+    start_time: float = Field(..., description="Start time in seconds")  # Removed ge=0 constraint
+    end_time: Optional[float] = Field(None, description="End time in seconds")  # Removed ge=0 constraint
     
     class Config:
         json_schema_extra = {
@@ -98,7 +90,7 @@ class TelemetryData(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "frames": [],  # Would contain Frame examples
+                "frames": [],
                 "track_statuses": [],
                 "driver_colors": {
                     "VER": [30, 65, 255],
@@ -126,17 +118,6 @@ class TelemetryStatusResponse(BaseModel):
     size_mb: Optional[float] = None
     created: Optional[str] = None
     modified: Optional[str] = None
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "exists": True,
-                "cached": True,
-                "size_mb": 45.2,
-                "created": "2024-03-02T14:30:00",
-                "modified": "2024-03-02T14:30:00"
-            }
-        }
 
 
 class CacheInfoResponse(BaseModel):

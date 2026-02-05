@@ -5,7 +5,7 @@ Handles different types of WebSocket messages and commands.
 """
 
 import logging
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, Optional
 from api.websocket.manager import get_websocket_manager
 
 logger = logging.getLogger(__name__)
@@ -105,7 +105,7 @@ class MessageHandler:
         }
 
 
-# Global message handler
+# Global message handler - INITIALIZE IT HERE
 _message_handler: Optional[MessageHandler] = None
 
 

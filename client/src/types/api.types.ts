@@ -1,11 +1,3 @@
-export interface RaceWeekend {
-  round_number: number;
-  event_name: string;
-  date: string;
-  country: string;
-  type: string;
-}
-
 export interface DriverPosition {
   x: number;
   y: number;
@@ -21,13 +13,6 @@ export interface DriverPosition {
   brake: number;
 }
 
-export interface Frame {
-  t: number;
-  lap: number;
-  drivers: Record<string, DriverPosition>;
-  weather?: WeatherData;
-}
-
 export interface WeatherData {
   track_temp: number | null;
   air_temp: number | null;
@@ -37,19 +22,17 @@ export interface WeatherData {
   rain_state: 'DRY' | 'RAINING';
 }
 
+export interface Frame {
+  t: number;
+  lap: number;
+  drivers: Record<string, DriverPosition>;
+  weather?: WeatherData;
+}
+
 export interface TrackStatus {
   status: string;
   start_time: number;
   end_time: number | null;
-}
-
-export interface TelemetryData {
-  frames: Frame[];
-  track_statuses: TrackStatus[];
-  driver_colors: Record<string, [number, number, number]>;
-  circuit_rotation: number;
-  total_laps: number;
-  session_info: SessionInfo;
 }
 
 export interface SessionInfo {
@@ -60,4 +43,13 @@ export interface SessionInfo {
   round: number;
   date: string;
   total_laps?: number;
+}
+
+export interface RawTelemetryData {
+  frames: Frame[];
+  track_statuses: TrackStatus[];
+  driver_colors: Record<string, [number, number, number]>;
+  circuit_rotation: number;
+  total_laps: number;
+  session_info: SessionInfo;
 }
