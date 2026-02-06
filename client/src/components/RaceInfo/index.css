@@ -1,0 +1,35 @@
+.race-info {
+  background-color: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.race-info-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.race-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.race-info-label {
+  color: #999;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.race-info-value {
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+}

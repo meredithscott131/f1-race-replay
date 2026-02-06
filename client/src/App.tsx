@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import AnimatedTrackCanvas from './components/Track/AnimatedTrackCanvas';
+import RaceViewer from './components/RaceViewer';
 import { telemetryService } from './services/telemetryService';
 import { buildTrackFromFrames } from './utils/trackDataConverter';
 import type { TrackData } from './types/track.types';
@@ -22,7 +22,7 @@ function App() {
 
   useEffect(() => {
     loadRaceData();
-  }, [year, round]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -45,14 +45,13 @@ function App() {
     try {
       console.log(`Loading race data for ${year} Round ${round}...`);
       
-      // Load track shape
       const trackResponse = await telemetryService.getTrackData(year, round, 'R');
-      console.log('Track data loaded:', trackResponse);
+      console.log('Track data loaded');
       
       const track = buildTrackFromFrames(trackResponse.frames, trackResponse.drs_zones);
       
       if (!track) {
-        throw new Error('Failed to build track from frames');
+        throw new Error('Failed to build track');
       }
 
       setTrackData(track);
@@ -60,18 +59,17 @@ function App() {
         `${trackResponse.session_info.event_name} - ${trackResponse.session_info.circuit_name}`
       );
       
-      // Load race frames (5000 frames = ~3.3 minutes of race at 25fps)
-      console.log('Loading race frames...');
+      console.log('Loading frames...');
       const framesResponse = await telemetryService.getRaceFrames(year, round, 'R', 5000);
       console.log(`Loaded ${framesResponse.frames.length} frames`);
       
       setFrames(framesResponse.frames);
       setDriverColors(framesResponse.driver_colors);
       
-      console.log('✅ Race data loaded successfully!');
+      console.log('✅ Complete!');
     } catch (err: any) {
       console.error('Error:', err);
-      setError(err.response?.data?.detail || err.message || 'Failed to load race data');
+      setError(err.response?.data?.detail || err.message || 'Failed to load');
     } finally {
       setLoading(false);
       if (loadingIntervalRef.current) {
@@ -85,15 +83,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>🏎️ F1 Race Replay</h1>
-        <div className="session-info">
-          {loading && (
-            <p>
-              Loading race data... ({loadingTime}s elapsed)
-            </p>
-          )}
-          {error && <p className="error">Error: {error}</p>}
-          {sessionInfo && !loading && <p>{sessionInfo}</p>}
-        </div>
+        {sessionInfo && !loading && <p className="session-info">{sessionInfo}</p>}
       </header>
 
       <main className="app-main">
@@ -101,31 +91,22 @@ function App() {
           <div className="loading-spinner">
             <div className="spinner"></div>
             <p>Loading {year} Round {round}...</p>
-            <p className="loading-time">{loadingTime} seconds elapsed</p>
+            <p className="loading-time">{loadingTime}s</p>
           </div>
         ) : error ? (
           <div className="error-message">
-            <h2>❌ Failed to Load Race</h2>
+            <h2>❌ Failed</h2>
             <p>{error}</p>
             <button onClick={loadRaceData}>Retry</button>
           </div>
-        ) : (
-          <AnimatedTrackCanvas 
-            trackData={trackData || undefined}
+        ) : trackData && frames.length > 0 ? (
+          <RaceViewer
+            trackData={trackData}
             frames={frames}
             driverColors={driverColors}
           />
-        )}
+        ) : null}
       </main>
-
-      <footer className="app-footer">
-        <p>
-          {year} Round {round} | 
-          {trackData && ` Track: ✓`}
-          {frames.length > 0 && ` | Frames: ${frames.length}`}
-          {trackData?.drsZones && ` | DRS Zones: ${trackData.drsZones.length}`}
-        </p>
-      </footer>
     </div>
   );
 }

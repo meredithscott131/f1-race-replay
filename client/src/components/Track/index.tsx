@@ -1,31 +1,31 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import type { TrackData, Point } from '../../types/track.types';
 import type { Frame } from '../../types/api.types';
+import './index.css';
 
 interface AnimatedTrackCanvasProps {
-  trackData?: TrackData;
+  trackData?: TrackData | null;
   frames?: Frame[];
   driverColors?: Record<string, [number, number, number]>;
+  currentFrame: number;
 }
 
 export default function AnimatedTrackCanvas({ 
   trackData, 
   frames,
-  driverColors 
+  driverColors,
+  currentFrame
 }: AnimatedTrackCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | undefined>(undefined);
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const [fps] = useState(25); // Match backend FPS
   
   // Scaling state
-  const scaleRef = useRef(1);
-  const offsetXRef = useRef(0);
-  const offsetYRef = useRef(0);
+  const scaleRef = useRef<number>(1);
+  const offsetXRef = useRef<number>(0);
+  const offsetYRef = useRef<number>(0);
 
-  // Calculate scaling when track data changes
-  useEffect(() => {
+  // Calculate scaling
+  const calculateScaling = useCallback(() => {
     if (!trackData || !canvasRef.current) return;
     
     const canvas = canvasRef.current;
@@ -56,41 +56,20 @@ export default function AnimatedTrackCanvas({
       const container = containerRef.current;
       canvasRef.current.width = container.clientWidth;
       canvasRef.current.height = container.clientHeight;
+      calculateScaling();
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [calculateScaling]);
 
-  // Animation loop
+  // Recalculate scaling when track data changes
   useEffect(() => {
-    if (!frames || frames.length === 0) return;
+    calculateScaling();
+  }, [calculateScaling]);
 
-    let lastTime = performance.now();
-    const frameTime = 1000 / fps;
-
-    const animate = (currentTime: number) => {
-      const deltaTime = currentTime - lastTime;
-
-      if (deltaTime >= frameTime) {
-        setCurrentFrame(prev => (prev + 1) % frames.length);
-        lastTime = currentTime;
-      }
-
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [frames, fps]);
-
-  // Draw loop
+  // Draw loop - redraws whenever currentFrame changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !trackData) return;
@@ -135,27 +114,47 @@ export default function AnimatedTrackCanvas({
       }
     }
 
-    // Draw finish line
-    if (trackData.innerBoundary.length > 0) {
+    // Draw finish line (checkered)
+    if (trackData.innerBoundary.length > 0 && trackData.outerBoundary.length > 0) {
       const innerStart = worldToScreen(trackData.innerBoundary[0]);
       const outerStart = worldToScreen(trackData.outerBoundary[0]);
       
-      const numSquares = 20;
-      for (let i = 0; i < numSquares; i++) {
-        const t1 = i / numSquares;
-        const t2 = (i + 1) / numSquares;
-        
-        const x1 = innerStart.x + t1 * (outerStart.x - innerStart.x);
-        const y1 = innerStart.y + t1 * (outerStart.y - innerStart.y);
-        const x2 = innerStart.x + t2 * (outerStart.x - innerStart.x);
-        const y2 = innerStart.y + t2 * (outerStart.y - innerStart.y);
-        
-        ctx.strokeStyle = i % 2 === 0 ? '#FFFFFF' : '#000000';
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
+      const dx = outerStart.x - innerStart.x;
+      const dy = outerStart.y - innerStart.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      
+      if (length > 0) {
+        const extension = 20;
+        const extendX = (dx / length) * extension;
+        const extendY = (dy / length) * extension;
+
+        const extendedInner = {
+          x: innerStart.x - extendX,
+          y: innerStart.y - extendY,
+        };
+
+        const extendedOuter = {
+          x: outerStart.x + extendX,
+          y: outerStart.y + extendY,
+        };
+
+        const numSquares = 20;
+        for (let i = 0; i < numSquares; i++) {
+          const t1 = i / numSquares;
+          const t2 = (i + 1) / numSquares;
+          
+          const x1 = extendedInner.x + t1 * (extendedOuter.x - extendedInner.x);
+          const y1 = extendedInner.y + t1 * (extendedOuter.y - extendedInner.y);
+          const x2 = extendedInner.x + t2 * (extendedOuter.x - extendedInner.x);
+          const y2 = extendedInner.y + t2 * (extendedOuter.y - extendedInner.y);
+          
+          ctx.strokeStyle = i % 2 === 0 ? '#FFFFFF' : '#000000';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
       }
     }
 
@@ -179,51 +178,21 @@ export default function AnimatedTrackCanvas({
 
         // Draw driver code label
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '10px sans-serif';
+        ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(code, screenPos.x, screenPos.y - 10);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(code, screenPos.x, screenPos.y - 12);
       }
-    }
-
-    // Draw frame info
-    if (frames && frames[currentFrame]) {
-      const frame = frames[currentFrame];
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '16px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(`Lap: ${frame.lap}`, 20, 30);
-      ctx.fillText(`Frame: ${currentFrame + 1}/${frames.length}`, 20, 50);
-      ctx.fillText(`Time: ${frame.t.toFixed(1)}s`, 20, 70);
     }
 
   }, [trackData, frames, currentFrame, driverColors]);
 
   return (
-    <div ref={containerRef} style={{ 
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#000',
-      overflow: 'hidden'
-    }}>
-      <canvas 
-        ref={canvasRef} 
-        style={{ 
-          display: 'block',
-          width: '100%',
-          height: '100%'
-        }} 
-      />
+    <div ref={containerRef} className="animated-track-canvas-container">
+      <canvas ref={canvasRef} className="animated-track-canvas" />
+      
       {!trackData && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          color: '#fff',
-          textAlign: 'center',
-          fontSize: '18px'
-        }}>
+        <div className="track-loading-placeholder">
           <p>Loading track data...</p>
         </div>
       )}

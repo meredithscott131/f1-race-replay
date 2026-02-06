@@ -65,10 +65,10 @@ export class TrackRenderer {
     this.clear();
 
     // Draw outer boundary
-    this.drawPath(this.trackData.outerBoundary, '#666666', 4);
+    this.drawPath(this.trackData.outerBoundary, '#666666', 2);
 
     // Draw inner boundary
-    this.drawPath(this.trackData.innerBoundary, '#666666', 4);
+    this.drawPath(this.trackData.innerBoundary, '#666666', 2);
 
     // Draw DRS zones (green highlights on outer boundary)
     this.drawDRSZones();

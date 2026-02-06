@@ -1,0 +1,60 @@
+.race-viewer {
+  display: flex;
+  flex-direction: row-reverse;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* Left side: Canvas + Controls stacked */
+.race-canvas-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  background-color: #000;
+}
+
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Controls nested under canvas only */
+.playback-controls-area {
+  flex-shrink: 0;
+  background-color: #0a0a0a;
+  border-top: 2px solid #333;
+  padding: 15px 20px;
+  width: 100%;
+}
+
+/* Right side: Sidebar */
+.race-sidebar {
+  width: 300px;
+  background-color: #1a1a1a;
+  border-left: 2px solid #333;
+  padding: 20px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .race-viewer {
+    flex-direction: column;
+  }
+
+  .race-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 2px solid #333;
+    max-height: 250px;
+  }
+}
