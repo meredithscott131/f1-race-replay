@@ -57,5 +57,6 @@ export interface RawTelemetryData {
 export interface RaceFramesResponse {
   frames: Frame[];
   driver_colors: Record<string, [number, number, number]>;
+  driver_teams: Record<string, string>;
   total_frames: number;
 }

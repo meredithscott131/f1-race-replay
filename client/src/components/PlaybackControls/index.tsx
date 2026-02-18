@@ -24,8 +24,6 @@ export default function PlaybackControls({
   onSeek,
   onRestart,
 }: PlaybackControlsProps) {
-  const [isSeeking, setIsSeeking] = useState(false);
-
   const handleSpeedIncrease = () => {
     const currentIndex = PLAYBACK_SPEEDS.indexOf(playbackSpeed);
     if (currentIndex < PLAYBACK_SPEEDS.length - 1) {
@@ -49,11 +47,11 @@ export default function PlaybackControls({
   };
 
   const handleRewind = () => {
-    onSeek(Math.max(0, currentFrame - 250)); // Jump back 10 seconds
+    onSeek(Math.max(0, currentFrame - 250));
   };
 
   const handleForward = () => {
-    onSeek(Math.min(totalFrames - 1, currentFrame + 250)); // Jump forward 10 seconds
+    onSeek(Math.min(totalFrames - 1, currentFrame + 250));
   };
 
   const progress = totalFrames > 0 ? (currentFrame / totalFrames) * 100 : 0;
@@ -68,9 +66,10 @@ export default function PlaybackControls({
         </div>
       </div>
 
-      {/* Control Buttons */}
-      <div className="controls-row">
-        <div className="controls-left">
+      {/* Control Buttons Container */}
+      <div className="controls-container">
+        {/* Left: Playback Controls */}
+        <div className="controls-section controls-left">
           <button className="control-btn" onClick={onRestart} title="Restart (R)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
@@ -78,31 +77,35 @@ export default function PlaybackControls({
           </button>
 
           <button className="control-btn" onClick={handleRewind} title="Rewind (←)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
               <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/>
             </svg>
           </button>
 
           <button className="control-btn control-btn-primary" onClick={onPlayPause} title="Play/Pause (Space)">
             {isPaused ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
               </svg>
             ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
               </svg>
             )}
           </button>
 
           <button className="control-btn" onClick={handleForward} title="Forward (→)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
               <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
             </svg>
           </button>
         </div>
 
-        <div className="controls-center">
+        {/* Divider */}
+        <div className="controls-divider" />
+
+        {/* Right: Speed Controls */}
+        <div className="controls-section controls-right">
           <div className="speed-display">
             <button 
               className="speed-btn" 

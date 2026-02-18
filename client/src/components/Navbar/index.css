@@ -1,0 +1,41 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  padding: 0px 25px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--color-red);
+  border-radius: 0px 0px var(--radius-md) 0px;
+  color: var(--color-text);
+  padding: 8px 16px;
+  font-size: var(--font-size-button);
+  
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-button);
+  font-weight: var(--font-weight-semi-bold);
+}
+
+.nav-btn:hover {
+  background-color: var(--color-red-hover);
+}
+
+.nav-btn:active {
+  transform: scale(0.95);
+}
+
+.nav-btn svg {
+  width: 25px;
+  height: 25px;
+}
+
+.nav-home {
+  /* Special styling for home button if needed */
+}

@@ -1,8 +1,22 @@
+/* Controls Container - fits content */
+.controls-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-component);
+  border: var(--component-border-weight) solid var(--color-outline);
+  border-radius: var(--radius-md);
+  padding: 5px;
+  gap: 20px;
+  align-self: center;
+}
+
 .playback-controls {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: center;
 }
 
 .progress-container {
@@ -14,10 +28,10 @@
 .progress-bar {
   position: relative;
   width: 100%;
-  height: 8px;
-  background-color: #333;
-  border-radius: 4px;
+  height: 30px;
+  background-color: var(--color-component);
   overflow: visible;
+  border: var(--component-border-weight) solid var(--color-outline);
 }
 
 .progress-fill {
@@ -25,8 +39,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #00cc00, #00ff00);
-  border-radius: 4px;
+  background: var(--color-red);
   transition: width 0.1s linear;
 }
 
@@ -34,11 +47,9 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 16px;
-  height: 16px;
-  background-color: #fff;
-  border: 2px solid #00ff00;
-  border-radius: 50%;
+  width: 5px;
+  height: 100%;
+  background-color: var(--color-text);
   cursor: pointer;
   transition: left 0.1s linear;
 }
@@ -47,11 +58,9 @@
   transform: translate(-50%, -50%) scale(1.2);
 }
 
-.controls-row {
+.controls-section {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 15px;
 }
 
 .controls-left {
@@ -60,29 +69,35 @@
   align-items: center;
 }
 
-.controls-center {
+.controls-right {
   display: flex;
   align-items: center;
 }
 
+/* Vertical Divider */
+.controls-divider {
+  width: 2px;
+  height: 50px;
+  background: var(--color-outline);
+}
+
+/* Control Buttons - No background, white icons */
 .control-btn {
-  background-color: #2d2d2d;
-  border: 2px solid #555;
-  border-radius: 8px;
-  color: #fff;
+  background-color: transparent;
+  border: none;
+  color: var(--color-text);
   width: 45px;
   height: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: opacity 0.2s;
+  opacity: 1;
 }
 
 .control-btn:hover:not(:disabled) {
-  background-color: #3d3d3d;
-  border-color: #e10600;
-  transform: scale(1.05);
+  opacity: 0.6;
 }
 
 .control-btn:active:not(:disabled) {
@@ -95,46 +110,35 @@
 }
 
 .control-btn-primary {
-  background-color: #e10600;
-  border-color: #e10600;
   width: 55px;
   height: 55px;
 }
 
-.control-btn-primary:hover:not(:disabled) {
-  background-color: #ff0800;
-  border-color: #ff0800;
-}
-
+/* Speed Display - cleaner */
 .speed-display {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background-color: #1a1a1a;
-  padding: 8px 15px;
-  border-radius: 8px;
-  border: 2px solid #333;
+  gap: 12px;
 }
 
 .speed-btn {
-  background-color: #2d2d2d;
-  border: 1px solid #555;
-  border-radius: 4px;
-  color: #fff;
-  width: 30px;
-  height: 30px;
+  background-color: transparent;
+  border: none;
+  color: var(--color-text);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 18px;
-  font-weight: bold;
-  transition: all 0.2s;
+  font-size: var(--font-size-header);
+  font-weight: var(--font-weight-bold);
+  transition: opacity 0.2s;
+  opacity: 1;
 }
 
 .speed-btn:hover:not(:disabled) {
-  background-color: #3d3d3d;
-  border-color: #e10600;
+  opacity: 0.6;
 }
 
 .speed-btn:disabled {
@@ -143,9 +147,9 @@
 }
 
 .speed-value {
-  color: #00ff00;
-  font-size: 16px;
-  font-weight: bold;
-  min-width: 45px;
+  color: var(--color-text);
+  font-size: var(--font-size-header);
+  font-weight: var(--font-weight-bold);
+  min-width: 50px;
   text-align: center;
 }

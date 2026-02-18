@@ -1,0 +1,75 @@
+.session-banner {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.event-info-container {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+.country-flag {
+  width: 30px;
+  height: auto;
+  object-fit: cover;
+}
+
+/* Left section: Grand Prix Name + Year */
+.event-section-left {
+  background: linear-gradient(to right, var(--color-red) 10%, var(--color-component) 40%);
+  border-right: 5px solid var(--color-red);
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.grand-prix-name {
+  font-size: var(--font-size-header);
+  font-family: var(--font-header);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.event-section-right {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.country-flag {
+  font-size: var(--font-size-caption);
+}
+
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.circuit-name {
+  font-size: var(--font-size-text);
+  font-family: var(--font-header);
+  font-weight: var(--font-weight-regular);
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.session-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.session-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

@@ -1,0 +1,66 @@
+@font-face {
+    font-family: 'F1';
+    src: url('/src/assets/fonts/F1-normal-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    fibte-display: swap;
+}
+
+@font-face {
+    font-family: 'F1';
+    src: url('/src/assets/fonts/F1-normal-700.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    fibte-display: swap;
+}
+
+@font-face {
+    font-family: 'F1';
+    src: url('/src/assets/fonts/F1-normal-900.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+    fibte-display: swap;
+}
+
+:root {
+  /* Colors */
+  --color-background: #15151E;
+  --color-header: #12101D;
+  --color-dark: #0A060D;
+  --color-component: #2B2A3F;
+  --color-outline: #999999a5;
+  --color-red: #E10600;
+  --color-red-hover: #a91100;
+  --color-red-click: rgb(128, 13, 0);
+  --color-text: #FFFFFF;
+  --color-yellow: #FFD429;
+
+  --color-grey-light: #aaa;
+  --color-grey-medium: #777;
+  --color-grey-dark: #555;
+
+  /* Typography */
+  --font-text: 'Titillium Web', sans-serif;
+  --font-header: 'F1', sans-serif;
+  --font-button: 'F1', sans-serif;
+
+  /* Font weights */
+  --font-weight-regular: 400;
+  --font-weight-semi-bold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+
+  /* Font sizes */
+  --font-size-caption: 12px;
+  --font-size-text: 16px;
+  --font-size-button: 18px;
+  --font-size-header: 24px;
+  --font-size-title: 32px;
+
+  /* Border radius */
+  --radius-md: 20px;
+
+  /* Border widths */
+  --component-border-weight: 3px;
+  --entry-border-weight: 2px;
+}

@@ -5,18 +5,31 @@ import type { TrackData } from '../../types/track.types';
 import type { Frame, DriverPosition } from '../../types/api.types';
 import './index.css';
 import Leaderboard from '../Leaderboard';
+import SessionBanner from '../SessionBanner';
 
 interface RaceViewerProps {
   trackData: TrackData;
   frames: Frame[];
   driverColors: Record<string, [number, number, number]>;
+  driverTeams: Record<string, string>;
+  eventName?: string;
+  circuitName?: string;
+  country?: string;
 }
 
-export default function RaceViewer({ trackData, frames, driverColors }: RaceViewerProps) {
+export default function RaceViewer({ 
+  trackData, 
+  frames, 
+  driverColors,
+  driverTeams,
+  eventName,
+  circuitName,
+  country
+}: RaceViewerProps) {
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [interpolatedFrame, setInterpolatedFrame] = useState<Frame | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(0.5);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
   // Use float for sub-frame precision
   const framePositionRef = useRef<number>(0);
@@ -182,6 +195,13 @@ export default function RaceViewer({ trackData, frames, driverColors }: RaceView
     <div className="race-viewer">
       {/* Left: Canvas + Controls */}
       <div className="race-canvas-column">
+          <SessionBanner 
+            eventName={eventName}
+            circuitName={circuitName}
+            country={country}
+            year={2024}
+          />
+        
         <div className="canvas-wrapper">
           <AnimatedTrackCanvas
             trackData={trackData}
@@ -212,6 +232,7 @@ export default function RaceViewer({ trackData, frames, driverColors }: RaceView
           currentFrame={displayFrame}
           driverColors={driverColors}
           totalLaps={57}
+          driverTeams={driverTeams}
         />
       </aside>
     </div>

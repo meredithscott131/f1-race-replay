@@ -1,10 +1,13 @@
 import type { Frame, DriverPosition } from '../../types/api.types';
+import { getTeamLogo, getTeamShortName } from '../../utils/teamLogos';
 import F1Header from './F1Header';
+import '../../styles/variables.css';
 import './index.css';
 
 interface LeaderboardProps {
   currentFrame: Frame | null;
   driverColors: Record<string, [number, number, number]>;
+  driverTeams?: Record<string, string>;
   totalLaps?: number;
 }
 
@@ -12,7 +15,7 @@ interface LeaderboardProps {
 const TYRE_COMPOUNDS: Record<number, { letter: string; bg: string }> = {
   0: { letter: 'S', bg: '#FF0000' },     // Soft - Red
   1: { letter: 'M', bg: '#FFFF00' },     // Medium - Yellow
-  2: { letter: 'H', bg: '#FFFFFF' },     // Hard - White
+  2: { letter: 'H', bg: '#bbbbbb' },     // Hard - White
   3: { letter: 'I', bg: '#00FF00' },     // Intermediate - Green
   4: { letter: 'W', bg: '#0066FF' },     // Wet - Blue
 };
@@ -23,7 +26,7 @@ interface DriverWithGap extends DriverPosition {
   intervalGap: number;
 }
 
-export default function Leaderboard({ currentFrame, driverColors, totalLaps }: LeaderboardProps) {
+export default function Leaderboard({ currentFrame, driverColors, totalLaps, driverTeams }: LeaderboardProps) {
   if (!currentFrame) return null;
 
   // Format time as MM:SS
@@ -68,13 +71,16 @@ export default function Leaderboard({ currentFrame, driverColors, totalLaps }: L
       <div className="leaderboard-header">
         <div className="header-info-item">
           <span className="header-label">LAP</span>
+          <span className="header-value-bold">
+            {currentFrame.lap}
+          </span>
           <span className="header-value">
-            {currentFrame.lap}{totalLaps ? `/${totalLaps}` : ''}
+            {totalLaps ? `/${totalLaps}` : ''}
           </span>
         </div>
         
         <div className="header-info-item">
-          <span className="header-value">{formatTime(currentFrame.t)}</span>
+          <span className="header-time">{formatTime(currentFrame.t)}</span>
         </div>
       </div>
 
@@ -83,22 +89,26 @@ export default function Leaderboard({ currentFrame, driverColors, totalLaps }: L
           const color = driverColors[driver.code] || [255, 255, 255];
           const colorStr = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
           const tyreCompound = TYRE_COMPOUNDS[Math.floor(driver.tyre)] || TYRE_COMPOUNDS[0];
+          const teamName = driverTeams?.[driver.code] || '';
+          const teamLogo = getTeamLogo(teamName);
+          const teamShort = getTeamShortName(teamName);
 
           return (
             <div key={driver.code} className="lb-entry">
               <div className="lb-position">{driver.position}</div>
               
               <div className="lb-driver">
-                <div 
-                  className="lb-color-stripe" 
-                  style={{ backgroundColor: colorStr }}
-                />
+                <img 
+                    src={`src/assets/TeamLogos/${teamLogo}`} 
+                    alt={teamName}
+                    className="lb-team-logo"
+                  />
                 <span className="lb-code">{driver.code}</span>
               </div>
               
               <div className="lb-gap">
                 {driver.position === 1 ? (
-                  <span className="gap-leader">INTERVAL</span>
+                  <span className="gap-leader">-</span>
                 ) : (
                   <span className="gap-value">+{driver.intervalGap.toFixed(1)}</span>
                 )}

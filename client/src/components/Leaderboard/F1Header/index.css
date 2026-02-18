@@ -1,10 +1,10 @@
 .f1-header {
-  background-color: #12101D;
+  background-color: var(--color-header);
   padding: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+  border-bottom: var(--component-border-weight) solid var(--color-outline);
 }
 
 .f1-logo {
@@ -16,10 +16,8 @@
 .f1-text {
   font-size: 28px;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text);
   letter-spacing: -2px;
-  font-family: 'Impact', 'Arial Black', sans-serif;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
   font-style: italic;
   transform: skewX(-8deg);
 }

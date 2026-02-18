@@ -1,19 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
+import Navbar from './components/Navbar';
 import RaceViewer from './components/RaceViewer';
 import { telemetryService } from './services/telemetryService';
 import { buildTrackFromFrames } from './utils/trackDataConverter';
 import type { TrackData } from './types/track.types';
 import type { Frame } from './types/api.types';
+import './styles/variables.css';
 import './App.css';
 
 function App() {
   const [trackData, setTrackData] = useState<TrackData | null>(null);
   const [frames, setFrames] = useState<Frame[]>([]);
   const [driverColors, setDriverColors] = useState<Record<string, [number, number, number]>>({});
+  const [driverTeams, setDriverTeams] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionInfo, setSessionInfo] = useState<string>('');
   const [loadingTime, setLoadingTime] = useState<number>(0);
+  
+  // Event info
+  const [eventName, setEventName] = useState<string>('');
+  const [circuitName, setCircuitName] = useState<string>('');
+  const [country, setCountry] = useState<string>('');
 
   const [year] = useState<number>(2024);
   const [round] = useState<number>(1);
@@ -55,6 +63,9 @@ function App() {
       }
 
       setTrackData(track);
+      setEventName(trackResponse.session_info.event_name);
+      setCircuitName(trackResponse.session_info.circuit_name);
+      setCountry(trackResponse.session_info.country);
       setSessionInfo(
         `${trackResponse.session_info.event_name} - ${trackResponse.session_info.circuit_name}`
       );
@@ -65,6 +76,7 @@ function App() {
       
       setFrames(framesResponse.frames);
       setDriverColors(framesResponse.driver_colors);
+      setDriverTeams(framesResponse.driver_teams || {});
       
       console.log('✅ Complete!');
     } catch (err: any) {
@@ -81,11 +93,6 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>🏎️ F1 Race Replay</h1>
-        {sessionInfo && !loading && <p className="session-info">{sessionInfo}</p>}
-      </header>
-
       <main className="app-main">
         {loading ? (
           <div className="loading-spinner">
@@ -100,11 +107,16 @@ function App() {
             <button onClick={loadRaceData}>Retry</button>
           </div>
         ) : trackData && frames.length > 0 ? (
-          <RaceViewer
-            trackData={trackData}
-            frames={frames}
-            driverColors={driverColors}
-          />
+          <>
+            <Navbar />
+            <RaceViewer
+                trackData={trackData}
+                frames={frames}
+                driverColors={driverColors}
+                driverTeams={driverTeams}
+                eventName={eventName}
+                circuitName={circuitName}
+                country={country} /></>
         ) : null}
       </main>
     </div>
