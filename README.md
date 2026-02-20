@@ -17,28 +17,14 @@ A Formula 1 race visualisation web app that turns accurate simulation data into 
 - **Responsive UI** — scales and re-centers automatically on window resize
 
 ## Screenshots
-![Main Dashboard Wireframe](shared\images\Screenshot1.png)
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Screenshot1.png" alt="Alt text" width="500">
 
 ## Wireframes
-![Main Dashboard Wireframe](shared\images\Wireframe1.png)
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Wireframe1.png" alt="Alt text" width="500">
 
-![Home Screen Wireframe](shared\images\Wireframe2.png)
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Wireframe2.png" alt="Alt text" width="500">
 
-## Project Structure
-
-```
-f1-race-replay/
-├── client/               # React + TypeScript frontend
-│   └── src/
-│       ├── components/   # Canvas renderers and UI components
-│       ├── types/        # Shared TypeScript interfaces
-│       └── styles/       # CSS variables and component styles
-├── server/               # Python FastF1 data server
-├── docker-compose.yml
-└── README.md
-```
-
-### Running Locally
+## Running Locally
 
 **Backend**
 
@@ -55,8 +41,6 @@ cd client
 npm install
 npm run dev
 ```
-
----
 
 ## Future Development Tasks
 1. Race Selection (home) screen​
