@@ -17,11 +17,7 @@ A Formula 1 race visualisation web app that turns accurate simulation data into 
 - **Responsive UI** — scales and re-centers automatically on window resize
 
 ## Screenshots
-<<<<<<< HEAD
-![Screenshot](shared\images\Screenshot1.png)
-=======
 <img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Screenshot1.png" alt="Alt text" width="500">
->>>>>>> 049704c128117ca5c9683c81fc0ae5f6a08e7e23
 
 ## Wireframes
 <img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Wireframe1.png" alt="Alt text" width="500">
