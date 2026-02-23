@@ -68,8 +68,8 @@ export class TrackRenderer {
 
     this.clear();
 
-    this.drawPath(this.trackData.outerBoundary, '#666666', 2);
-    this.drawPath(this.trackData.innerBoundary, '#666666', 2);
+    this.drawPath(this.trackData.outerBoundary, '#666666', 1);
+    this.drawPath(this.trackData.innerBoundary, '#666666', 1);
     this.drawDRSZones();
     this.drawFinishLine();
   }

@@ -6,8 +6,8 @@
   background-color: var(--color-component);
   border: var(--component-border-weight) solid var(--color-outline);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
-  padding: 0px 10px 0px 10px;
-  gap: 20px;
+  padding: 0px 5px 0px 5px;
+  gap: 10px;
   align-self: center;
 }
 
@@ -15,7 +15,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -27,7 +27,7 @@
 .progress-bar {
   position: relative;
   width: 100%;
-  height: 30px;
+  height: 20px;
   background-color: var(--color-component);
   overflow: visible;
   border: var(--component-border-weight) solid var(--color-outline);
@@ -46,7 +46,7 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 5px;
+  width: 3px;
   height: 100%;
   background-color: var(--color-text);
   cursor: pointer;
@@ -64,7 +64,6 @@
 
 .controls-left {
   display: flex;
-  gap: 8px;
   align-items: center;
 }
 
@@ -76,7 +75,7 @@
 /* Vertical Divider */
 .controls-divider {
   width: 2px;
-  height: 50px;
+  height: 30px;
   background: linear-gradient(to bottom, transparent, var(--color-outline), transparent);
 }
 
@@ -109,15 +108,14 @@
 }
 
 .control-btn-primary {
-  width: 55px;
-  height: 55px;
+  width: 30px;
+  height: 30px;
 }
 
 /* Speed Display - cleaner */
 .speed-display {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
 .speed-btn {

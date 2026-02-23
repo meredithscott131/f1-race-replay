@@ -11,7 +11,7 @@
 .leaderboard-header {
   display: flex;
   justify-content: space-between;
-  padding: 10px 15px;
+  padding: 5px 10px;
   background: linear-gradient(to bottom, var(--color-header) 0%, var(--color-component) 100%);
   border-bottom: var(--component-border-weight) solid var(--color-outline);
   gap: 10px;
@@ -27,8 +27,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 150px;
-  padding: 5px;
+  width: 100px;
 }
 
 .f1-logo-img {
@@ -50,7 +49,7 @@
 }
 
 .header-label {
-  font-size: var(--font-size-header);
+  font-size: var(--font-size-text);
   font-weight: var(--font-weight-regular);
   color: var(--color-grey-light);
   letter-spacing: 0.5px;
@@ -59,19 +58,19 @@
 }
 
 .header-value {
-  font-size: var(--font-size-header);
+  font-size: var(--font-size-text);
   font-weight: var(--font-weight-regular);
   color: var(--color-grey-light);
 }
 
 .header-value-bold {
-  font-size: var(--font-size-header);
+  font-size: var(--font-size-text);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
 }
 
 .header-time {
-  font-size: var(--font-size-text);
+  font-size: var(--font-size-caption);
   font-weight: var(--font-weight-semi-bold);
   color: var(--color-text);
 }
@@ -83,7 +82,7 @@
 }
 
 .leaderboard-entries {
-  flex: 1; /* Take all remaining space */
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -103,16 +102,15 @@
   border-radius: 3px;
 }
 
-
 .lb-entry {
   display: grid;
-  grid-template-columns: 40px 1fr 80px auto;
+  grid-template-columns: 28px 1fr 60px 24px;
   align-items: stretch;
   padding: 0;
   border-bottom: var(--entry-border-weight) solid var(--color-grey-dark);
   transition: background-color 0.15s;
   flex: 1;
-  min-height: 40px; /* prevents infinite shrinking, triggers overflow + scroll */
+  min-height: 0;
 }
 
 .lb-entry:hover {
@@ -123,33 +121,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-text);
+  font-size: 12px;
   font-weight: var(--font-weight-regular);
   color: var(--color-text);
   background-color: var(--color-dark);
-  padding: 8px 0;
+  padding: 1px 0;
 }
 
 .lb-driver {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   color: var(--color-text);
   background-color: var(--color-dark);
-  padding: auto;
   font-family: var(--font-text);
 }
 
 .lb-color-stripe {
-  width: 4px;
+  width: 3px;
   height: 100%;
-  min-height: 24px;
+  min-height: 0;
   border-radius: 2px;
   flex-shrink: 0;
 }
 
 .lb-code {
-  font-size: var(--font-size-text);
+  font-size: 12px;
   font-weight: var(--font-weight-semi-bold);
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -160,12 +157,12 @@
   align-items: center;
   justify-content: flex-end;
   text-align: right;
-  padding: 8px 4px;
-  min-width: 80px;
+  padding: 1px 3px;
+  min-width: 0;
 }
 
 .gap-leader {
-  font-size: var(--font-size-text);
+  font-size: 12px;
   font-weight: var(--font-weight-semi-bold);
   color: var(--color-grey-light);
   letter-spacing: 0.3px;
@@ -173,7 +170,7 @@
 }
 
 .gap-value {
-  font-size: var(--font-size-text);
+  font-size: 12px;
   font-weight: var(--font-weight-bold);
   color: var(--color-grey-light);
 }
@@ -182,25 +179,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-text);
+  font-size: 11px;
   font-weight: var(--font-weight-semi-bold);
   text-align: center;
-  padding: 8px 12px 8px 2px;
-  min-width: 30px;
+  padding: 1px 4px 1px 2px;
+  min-width: 0;
 }
 
 .lb-team-logo {
-  width: 24px;
-  height: 24px;
+  width: 15px;
+  height: 15px;
   object-fit: contain;
-  flex-shrink: 0;
-}
-
-.lb-color-stripe {
-  width: 4px;
-  height: 100%;
-  min-height: 24px;
-  border-radius: 2px;
   flex-shrink: 0;
 }
 

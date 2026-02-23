@@ -1,7 +1,7 @@
-import type { Frame, DriverPosition } from '../../types/api.types';
-import { getTeamLogo, getTeamShortName } from '../../utils/teamLogos';
+import type { Frame, DriverPosition } from '../../../types/api.types';
+import { getTeamLogo, getTeamShortName } from '../../../utils/teamLogos';
 import F1Header from './F1Header';
-import '../../styles/variables.css';
+import '../../../styles/variables.css';
 import './index.css';
 
 interface LeaderboardProps {

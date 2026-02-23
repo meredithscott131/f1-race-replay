@@ -9,8 +9,8 @@ export default function Navbar() {
     <nav className="navbar">
       <button className="nav-btn nav-home" onClick={handleHomeClick}>
         <svg 
-          width="30" 
-          height="30" 
+          width="20" 
+          height="20" 
           viewBox="0 0 24 24" 
           fill="currentColor"
         >

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import AnimatedTrackCanvas from '../Track';
 import PlaybackControls from '../PlaybackControls';
-import type { TrackData } from '../../types/track.types';
-import type { Frame, DriverPosition } from '../../types/api.types';
+import type { TrackData } from '../../../types/track.types';
+import type { Frame, DriverPosition } from '../../../types/api.types';
 import './index.css';
 import Leaderboard from '../Leaderboard';
 import SessionBanner from '../SessionBanner';

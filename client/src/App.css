@@ -6,9 +6,9 @@
   background-color: var(--color-background);
   color: var(--color-text);
   overflow: hidden;
-  padding: 25px;
+  padding: 20px;
   font-family: var(--font-text);
-  position: relative; /* add this */
+  position: relative;
 }
 
 .app::before {

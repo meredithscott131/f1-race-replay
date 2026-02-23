@@ -17,7 +17,7 @@ A Formula 1 race visualisation web app that turns accurate simulation data into 
 - **Responsive UI** — scales and re-centers automatically on window resize
 
 ## Screenshots
-![Main Dashboard Wireframe](shared\images\Screenshot1.png)
+![Screenshot](shared\images\Screenshot1.png)
 
 ## Wireframes
 ![Main Dashboard Wireframe](shared\images\Wireframe1.png)

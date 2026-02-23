@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import Navbar from './components/Navbar';
-import RaceViewer from './components/RaceViewer';
+import Navbar from './components/Dashboard/Navbar';
+import RaceViewer from './components/Dashboard/RaceViewer';
 import { telemetryService } from './services/telemetryService';
 import { buildTrackFromFrames } from './utils/trackDataConverter';
 import type { TrackData } from './types/track.types';

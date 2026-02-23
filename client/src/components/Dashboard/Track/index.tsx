@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
-import type { TrackData, Point } from '../../types/track.types';
-import type { Frame } from '../../types/api.types';
+import type { TrackData, Point } from '../../../types/track.types';
+import type { Frame } from '../../../types/api.types';
 import './index.css';
 
 interface AnimatedTrackCanvasProps {
@@ -24,21 +24,20 @@ export default function AnimatedTrackCanvas({
   const scaleRef = useRef<number>(1);
   const offsetXRef = useRef<number>(0);
   const offsetYRef = useRef<number>(0);
+  const dprRef = useRef<number>(1);
 
   const calculateScaling = useCallback(() => {
     if (!trackData || !canvasRef.current) return;
     
     const canvas = canvasRef.current;
     const bounds = trackData.bounds;
-    const padding = 80;
+    const padding = 40;
 
-    // After -90° rotation, world Y maps to screen X and world X maps to screen Y.
-    // So the canvas width is constrained by the world Y range, and height by X range.
     const worldWidth = bounds.maxY - bounds.minY;
     const worldHeight = bounds.maxX - bounds.minX;
 
-    const availableWidth = canvas.width - 2 * padding;
-    const availableHeight = canvas.height - 2 * padding;
+    const availableWidth = canvas.width / dprRef.current - 2 * padding;
+    const availableHeight = canvas.height / dprRef.current - 2 * padding;
 
     const scaleX = availableWidth / worldWidth;
     const scaleY = availableHeight / worldHeight;
@@ -47,17 +46,28 @@ export default function AnimatedTrackCanvas({
     const scaledWidth = worldWidth * scaleRef.current;
     const scaledHeight = worldHeight * scaleRef.current;
 
-    // Negating both axes shifts the anchor to the max bound instead of min.
-    offsetXRef.current = (canvas.width - scaledWidth) / 2 + bounds.maxY * scaleRef.current;
-    offsetYRef.current = (canvas.height - scaledHeight) / 2 + bounds.maxX * scaleRef.current;
+    const cssWidth = canvas.width / dprRef.current;
+    const cssHeight = canvas.height / dprRef.current;
+
+    offsetXRef.current = (cssWidth - scaledWidth) / 2 + bounds.maxY * scaleRef.current;
+    offsetYRef.current = (cssHeight - scaledHeight) / 2 + bounds.maxX * scaleRef.current;
   }, [trackData]);
 
   useEffect(() => {
     const handleResize = () => {
       if (!canvasRef.current || !containerRef.current) return;
       const container = containerRef.current;
-      canvasRef.current.width = container.clientWidth;
-      canvasRef.current.height = container.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+      dprRef.current = dpr;
+
+      // Set backing buffer at full physical resolution
+      canvasRef.current.width = container.clientWidth * dpr;
+      canvasRef.current.height = container.clientHeight * dpr;
+
+      // Scale the context so all drawing coords are in CSS pixels
+      const ctx = canvasRef.current.getContext('2d');
+      ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+
       calculateScaling();
     };
 
@@ -77,14 +87,14 @@ export default function AnimatedTrackCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 180° rotation negates both axes: screen.x = -world.y, screen.y = -world.x
     const worldToScreen = (point: Point): Point => ({
       x: -point.y * scaleRef.current + offsetXRef.current,
       y: -point.x * scaleRef.current + offsetYRef.current,
     });
 
+    // Clear using CSS dimensions (context is pre-scaled by dpr)
     ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvas.width / dprRef.current, canvas.height / dprRef.current);
 
     const drawPath = (points: Point[], color: string, lineWidth: number) => {
       if (points.length < 2) return;
@@ -100,14 +110,14 @@ export default function AnimatedTrackCanvas({
       ctx.stroke();
     };
 
-    drawPath(trackData.outerBoundary, '#666666', 4);
-    drawPath(trackData.innerBoundary, '#666666', 4);
+    drawPath(trackData.outerBoundary, '#666666', 3);
+    drawPath(trackData.innerBoundary, '#666666', 3);
 
     if (trackData.drsZones) {
       for (const zone of trackData.drsZones) {
         const segment = trackData.outerBoundary.slice(zone.startIndex, zone.endIndex + 1);
         if (segment.length > 1) {
-          drawPath(segment, '#00FF00', 8);
+          drawPath(segment, '#00FF00', 6);
         }
       }
     }
@@ -121,7 +131,7 @@ export default function AnimatedTrackCanvas({
       const length = Math.sqrt(dx * dx + dy * dy);
       
       if (length > 0) {
-        const extension = 20;
+        const extension = 16;
         const extendX = (dx / length) * extension;
         const extendY = (dy / length) * extension;
 
@@ -134,7 +144,7 @@ export default function AnimatedTrackCanvas({
           const t2 = (i + 1) / numSquares;
           
           ctx.strokeStyle = i % 2 === 0 ? '#FFFFFF' : '#000000';
-          ctx.lineWidth = 6;
+          ctx.lineWidth = 5;
           ctx.beginPath();
           ctx.moveTo(
             extendedInner.x + t1 * (extendedOuter.x - extendedInner.x),
@@ -160,14 +170,14 @@ export default function AnimatedTrackCanvas({
 
         ctx.fillStyle = colorStr;
         ctx.beginPath();
-        ctx.arc(screenPos.x, screenPos.y, 6, 0, Math.PI * 2);
+        ctx.arc(screenPos.x, screenPos.y, 5, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 10px sans-serif';
+        ctx.font = 'bold 8px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(code, screenPos.x, screenPos.y - 12);
+        ctx.fillText(code, screenPos.x, screenPos.y - 10);
       }
     }
 

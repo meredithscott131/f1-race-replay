@@ -1,6 +1,6 @@
 .f1-header {
   background-color: var(--color-header);
-  padding: 12px;
+  padding: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,16 +13,6 @@
   justify-content: center;
 }
 
-.f1-text {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text);
-  letter-spacing: -2px;
-  font-style: italic;
-  transform: skewX(-8deg);
-}
-
 .f1-logo-img {
-  width: 100px;
-  height: auto;
+  height: 10px;
 }
