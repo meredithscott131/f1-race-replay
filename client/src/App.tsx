@@ -10,53 +10,46 @@ import './styles/variables.css';
 import './App.css';
 
 type Screen = 'select' | 'viewer';
-
 interface RaceRef { year: number; round: number; }
 
 function App() {
   const [screen, setScreen] = useState<Screen>('select');
-
   const [selectedYear, setSelectedYear] = useState<number>(2024);
   const [selectedRound, setSelectedRound] = useState<number>(1);
-
-  // Flat ordered list of all races across all seasons, built when the user
-  // enters the viewer so prev/next navigation can wrap across year boundaries.
   const [allRaces, setAllRaces] = useState<RaceRef[]>([]);
 
   const [trackData, setTrackData] = useState<TrackData | null>(null);
   const [frames, setFrames] = useState<Frame[]>([]);
   const [driverColors, setDriverColors] = useState<Record<string, [number, number, number]>>({});
   const [driverTeams, setDriverTeams] = useState<Record<string, string>>({});
+  const [officialPositions, setOfficialPositions] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingTime, setLoadingTime] = useState(0);
   const [eventName, setEventName] = useState('');
   const [circuitName, setCircuitName] = useState('');
   const [country, setCountry] = useState('');
+  const [totalLaps, setTotalLaps] = useState<number | undefined>(undefined);
 
   const loadingIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    return () => {
-      if (loadingIntervalRef.current) clearInterval(loadingIntervalRef.current);
-    };
+    return () => { if (loadingIntervalRef.current) clearInterval(loadingIntervalRef.current); };
   }, []);
 
-  // Build the flat cross-season race list once when transitioning to the viewer.
   const buildAllRaces = async (currentYear: number, currentRound: number) => {
     try {
       const { years } = await telemetryService.getAvailableYears();
       const sorted = [...years].sort((a, b) => a - b);
-
       const schedules = await Promise.all(
-        sorted.map(y => telemetryService.getRaceSchedule(y).then(races =>
-          races.map(r => ({ year: y, round: r.round_number }))
-        ).catch(() => [] as RaceRef[]))
+        sorted.map(y =>
+          telemetryService.getRaceSchedule(y)
+            .then(races => races.map(r => ({ year: y, round: r.round_number })))
+            .catch(() => [] as RaceRef[])
+        )
       );
-
       setAllRaces(schedules.flat());
     } catch {
-      // Fall back to just the current year's rounds being navigable
       try {
         const races = await telemetryService.getRaceSchedule(currentYear);
         setAllRaces(races.map(r => ({ year: currentYear, round: r.round_number })));
@@ -88,6 +81,8 @@ function App() {
     setLoadingTime(0);
     setTrackData(null);
     setFrames([]);
+    setTotalLaps(undefined);
+    setOfficialPositions({});
 
     const startTime = Date.now();
     loadingIntervalRef.current = window.setInterval(() => {
@@ -95,7 +90,7 @@ function App() {
     }, 1000);
 
     try {
-      const trackResponse = await telemetryService.getTrackData(year, round, 'R');
+      const trackResponse = await telemetryService.getTrackData(year, round);
       const track = buildTrackFromFrames(trackResponse.frames, trackResponse.drs_zones);
       if (!track) throw new Error('Failed to build track');
 
@@ -103,11 +98,13 @@ function App() {
       setEventName(trackResponse.session_info.event_name);
       setCircuitName(trackResponse.session_info.circuit_name);
       setCountry(trackResponse.session_info.country);
+      setTotalLaps(trackResponse.session_info.total_laps ?? undefined);
 
-      const framesResponse = await telemetryService.getRaceFrames(year, round, 'R', 5000);
+      const framesResponse = await telemetryService.getRaceFrames(year, round);
       setFrames(framesResponse.frames);
       setDriverColors(framesResponse.driver_colors);
       setDriverTeams(framesResponse.driver_teams || {});
+      setOfficialPositions(framesResponse.official_positions || {});
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Failed to load');
     } finally {
@@ -126,16 +123,14 @@ function App() {
   const handlePrevRace = () => {
     if (currentRaceIdx <= 0) return;
     const { year, round } = allRaces[currentRaceIdx - 1];
-    setSelectedYear(year);
-    setSelectedRound(round);
+    setSelectedYear(year); setSelectedRound(round);
     loadRaceData(year, round);
   };
 
   const handleNextRace = () => {
     if (currentRaceIdx < 0 || currentRaceIdx >= allRaces.length - 1) return;
     const { year, round } = allRaces[currentRaceIdx + 1];
-    setSelectedYear(year);
-    setSelectedRound(round);
+    setSelectedYear(year); setSelectedRound(round);
     loadRaceData(year, round);
   };
 
@@ -148,7 +143,6 @@ function App() {
           <div className="loading-spinner">
             <div className="spinner" />
             <p>Loading {selectedYear} Round {selectedRound}…</p>
-            <p className="loading-time">{loadingTime}s</p>
           </div>
         ) : error ? (
           <div className="error-message">
@@ -171,6 +165,8 @@ function App() {
               circuitName={circuitName}
               country={country}
               year={selectedYear}
+              totalLaps={totalLaps}
+              officialPositions={officialPositions}
               hasPrevRace={currentRaceIdx > 0}
               hasNextRace={currentRaceIdx >= 0 && currentRaceIdx < allRaces.length - 1}
               onPrevRace={handlePrevRace}

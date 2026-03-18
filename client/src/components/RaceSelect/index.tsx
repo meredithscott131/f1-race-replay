@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { telemetryService } from '../../services/telemetryService';
+import { flagUrl } from '../../lib/assets';
 import type { RaceWeekend } from '../../types/race.types';
 import RaceSelectHeader from './Header';
 import RaceTable from './Table';
@@ -61,6 +62,7 @@ export default function RaceSelect({ onSelectRace }: RaceSelectProps) {
           races={races}
           selectedYear={selectedYear}
           onSelectRace={onSelectRace}
+          getFlagUrl={flagUrl}
         />
       )}
     </div>

@@ -10,8 +10,10 @@ export const TEAM_INFO: Record<string, { logo?: string; color: string; shortName
   'Haas F1 Team': { color: '#B6BABD', shortName: 'HAA', logo: 'Haas.png' },
   'RB': { color: '#6692FF', shortName: 'RB', logo: 'Alpha Tauri.png' },
   'Racing Bulls': { color: '#6692FF', shortName: 'RB', logo: 'Alpha Tauri.png' },
+  'AlphaTauri': { color: '#6692FF', shortName: 'AT', logo: 'Alpha Tauri.png' },
   'Sauber': { color: '#52E252', shortName: 'SAU', logo: 'Sauber.png' },
   'Kick Sauber': { color: '#52E252', shortName: 'SAU', logo: 'Kick Sauber.png' },
+  'Alfa Romeo': { color: '#B6BABD', shortName: 'AR', logo: 'Alfa Romeo.png' },
 };
 
 export function getTeamLogo(teamName: string): string | null {

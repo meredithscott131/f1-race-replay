@@ -12,29 +12,45 @@ interface RaceViewerProps {
   frames: Frame[];
   driverColors: Record<string, [number, number, number]>;
   driverTeams: Record<string, string>;
+  officialPositions?: Record<string, number>;
   eventName?: string;
   circuitName?: string;
   country?: string;
   year?: number;
+  totalLaps?: number;
   onPrevRace?: () => void;
   onNextRace?: () => void;
   hasPrevRace?: boolean;
   hasNextRace?: boolean;
 }
 
+
+function deriveLeaderCode(
+  frame: Frame | null,
+  officialPositions: Record<string, number>,
+): string | null {
+  if (!frame) return null;
+
+  const hasOfficial = Object.keys(officialPositions).length > 0;
+
+  const sorted = Object.entries(frame.drivers)
+    .filter(([, d]) => !d.is_out)
+    .sort(([codeA, a], [codeB, b]) => {
+      if (a.finished && !b.finished) return -1;
+      if (!a.finished && b.finished) return 1;
+      const posA = hasOfficial ? (officialPositions[codeA] ?? a.position) : a.position;
+      const posB = hasOfficial ? (officialPositions[codeB] ?? b.position) : b.position;
+      return posA - posB;
+    });
+
+  return sorted[0]?.[0] ?? null;
+}
+
 export default function RaceViewer({
-  trackData,
-  frames,
-  driverColors,
-  driverTeams,
-  eventName,
-  circuitName,
-  country,
-  year,
-  onPrevRace,
-  onNextRace,
-  hasPrevRace = false,
-  hasNextRace = false,
+  trackData, frames, driverColors, driverTeams,
+  officialPositions = {},
+  eventName, circuitName, country, year, totalLaps,
+  onPrevRace, onNextRace, hasPrevRace = false, hasNextRace = false,
 }: RaceViewerProps) {
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [interpolatedFrame, setInterpolatedFrame] = useState<Frame | null>(null);
@@ -60,7 +76,7 @@ export default function RaceViewer({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case ' ':       e.preventDefault(); handlePlayPause(); break;
+        case ' ':          e.preventDefault(); handlePlayPause(); break;
         case 'ArrowLeft':  e.preventDefault(); handleSeek(Math.floor(framePositionRef.current) - 25); break;
         case 'ArrowRight': e.preventDefault(); handleSeek(Math.floor(framePositionRef.current) + 25); break;
         case 'ArrowUp':    e.preventDefault(); handleSpeedChange(Math.min(8, playbackSpeed * 2)); break;
@@ -107,6 +123,8 @@ export default function RaceViewer({
               speed: lerp(p1.speed, p2.speed, t), gear: p1.gear, drs: p1.drs,
               throttle: lerp(p1.throttle, p2.throttle, t),
               brake: lerp(p1.brake, p2.brake, t),
+              is_out: p1.is_out,
+              finished: p1.finished,
             };
           } else {
             interpolatedDrivers[code] = frame1.drivers[code];
@@ -114,7 +132,12 @@ export default function RaceViewer({
         }
 
         setCurrentFrameIndex(frameIndex);
-        setInterpolatedFrame({ t: lerp(frame1.t, frame2.t, t), lap: frame1.lap, drivers: interpolatedDrivers, weather: frame1.weather });
+        setInterpolatedFrame({
+          t: lerp(frame1.t, frame2.t, t),
+          lap: frame1.lap,
+          drivers: interpolatedDrivers,
+          weather: frame1.weather,
+        });
         lastTime = currentTime;
       }
       animationRef.current = requestAnimationFrame(animate);
@@ -125,7 +148,8 @@ export default function RaceViewer({
   }, [frames, isPaused, playbackSpeed]);
 
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-  const displayFrame = interpolatedFrame || (frames[currentFrameIndex] || null);
+  const displayFrame = interpolatedFrame || frames[currentFrameIndex] || null;
+  const leaderCode = deriveLeaderCode(displayFrame, officialPositions);
 
   return (
     <div className="race-viewer">
@@ -143,6 +167,7 @@ export default function RaceViewer({
             driverColors={driverColors}
             currentFrame={currentFrameIndex}
             interpolatedFrame={interpolatedFrame}
+            leaderCode={leaderCode}
           />
         </div>
         <div className="playback-controls-area">
@@ -167,8 +192,9 @@ export default function RaceViewer({
         <Leaderboard
           currentFrame={displayFrame}
           driverColors={driverColors}
-          totalLaps={57}
+          totalLaps={totalLaps}
           driverTeams={driverTeams}
+          officialPositions={officialPositions}
         />
       </aside>
     </div>

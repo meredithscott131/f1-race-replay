@@ -11,6 +11,8 @@ export interface DriverPosition {
   drs: number;
   throttle: number;
   brake: number;
+  is_out?: boolean;
+  finished?: boolean;
 }
 
 export interface WeatherData {
@@ -58,5 +60,6 @@ export interface RaceFramesResponse {
   frames: Frame[];
   driver_colors: Record<string, [number, number, number]>;
   driver_teams: Record<string, string>;
+  official_positions: Record<string, number>;  // ← add this
   total_frames: number;
 }

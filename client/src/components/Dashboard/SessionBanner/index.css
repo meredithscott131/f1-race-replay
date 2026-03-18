@@ -10,8 +10,8 @@
 }
 
 .country-flag {
-  width: 30px;
-  height: auto;
+  width: 24px;   /* 2:3 ratio — 16px height × 1.5 */
+  height: 16px;
   object-fit: cover;
 }
 

@@ -117,6 +117,18 @@
   background-color: rgba(88, 81, 121, 0.4);
 }
 
+.lb-entry--out {
+  opacity: 0.5;
+}
+
+.lb-entry--out:hover {
+  background-color: transparent;
+}
+
+.lb-entry--leader .lb-position {
+  background-color: var(--color-red);
+}
+
 .lb-position {
   display: flex;
   align-items: center;
@@ -135,6 +147,7 @@
   color: var(--color-text);
   background-color: var(--color-dark);
   font-family: var(--font-text);
+  padding-left: 5px;
 }
 
 .lb-color-stripe {
@@ -173,6 +186,13 @@
   font-size: 12px;
   font-weight: var(--font-weight-bold);
   color: var(--color-grey-light);
+}
+
+.gap-out {
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-grey-light);
+  letter-spacing: 0.5px;
 }
 
 .lb-tyre {

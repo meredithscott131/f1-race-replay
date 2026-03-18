@@ -210,6 +210,7 @@ tbody td.col-track {
 }
 
 .track-cell-image {
+  width: 24px;   /* 2:3 ratio — 16px height × 1.5 */
   height: 16px;
   object-fit: cover;
   border-radius: 2px;

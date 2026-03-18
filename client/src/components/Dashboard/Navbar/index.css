@@ -14,12 +14,12 @@
   color: var(--color-text);
   padding: 8px 8px;
   font-size: var(--font-size-button);
-  
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
   font-family: var(--font-button);
   font-weight: var(--font-weight-semi-bold);
+  border: none;
 }
 
 .nav-btn:hover {
@@ -35,6 +35,153 @@
   height: 15px;
 }
 
-.nav-home {
-  /* Special styling for home button if needed */
+.nav-info {
+  margin-left: auto;
+  margin-right: var(--component-border-weight, 1px);
+  background-color: var(--color-component);
+  border-radius: 5px;
+  outline: var(--component-border-weight) solid var(--color-outline);
+  padding: 5px;
+  aspect-ratio: 1;
+  justify-content: center;
+}
+
+.nav-info:hover {
+  background-color: var(--color-component-light);
+}
+
+.nav-info span {
+  display: none;
+}
+
+.nav-info svg {
+  color: var(--color-grey-lightest);
+}
+
+/* ── Modal overlay ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal box ── */
+.modal {
+  position: relative;
+  background-color: var(--color-bg, #1a1a1a);
+  color: var(--color-text, #fff);
+  border-radius: var(--radius-md, 8px);
+  padding: 32px;
+  width: min(480px, 90vw);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--color-text, #fff);
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  opacity: 1;
+}
+
+.modal-title {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+  font-family: var(--font-button, sans-serif);
+  font-weight: var(--font-weight-semi-bold, 600);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Sections ── */
+.modal-section {
+  margin-bottom: 20px;
+}
+
+.modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.modal-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.5;
+  margin: 0 0 8px;
+  font-family: var(--font-button, sans-serif);
+}
+
+.modal-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.85;
+}
+
+.modal-link {
+  color: var(--color-red, #e63946);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.modal-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Follow buttons ── */
+.modal-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.modal-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--color-red, #e63946);
+  color: var(--color-text, #fff);
+  border-radius: 0px 0px var(--radius-md, 8px) 0px;
+  padding: 8px 14px;
+  font-size: var(--font-size-button, 0.8rem);
+  font-family: var(--font-button, sans-serif);
+  font-weight: var(--font-weight-semi-bold, 600);
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 0.2s, transform 0.1s;
+  cursor: pointer;
+}
+
+.modal-follow-btn:hover {
+  background-color: var(--color-red-hover, #c0303b);
+}
+
+.modal-follow-btn:active {
+  transform: scale(0.95);
 }

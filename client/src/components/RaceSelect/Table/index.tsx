@@ -2,30 +2,6 @@ import { useState } from 'react';
 import type { RaceWeekend } from "../../../types/race.types"
 import './index.css';
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  'Australia': '🇦🇺', 'Austria': '🇦🇹', 'Azerbaijan': '🇦🇿',
-  'Bahrain': '🇧🇭', 'Belgium': '🇧🇪', 'Brazil': '🇧🇷',
-  'Canada': '🇨🇦', 'China': '🇨🇳', 'France': '🇫🇷',
-  'Germany': '🇩🇪', 'Hungary': '🇭🇺', 'Italy': '🇮🇹',
-  'Japan': '🇯🇵', 'Mexico': '🇲🇽', 'Monaco': '🇲🇨',
-  'Netherlands': '🇳🇱', 'Portugal': '🇵🇹', 'Qatar': '🇶🇦',
-  'Saudi Arabia': '🇸🇦', 'Singapore': '🇸🇬', 'Spain': '🇪🇸',
-  'United Arab Emirates': '🇦🇪', 'UAE': '🇦🇪',
-  'United Kingdom': '🇬🇧', 'United States': '🇺🇸', 'USA': '🇺🇸',
-  'Vietnam': '🇻🇳', 'Russia': '🇷🇺', 'Turkey': '🇹🇷',
-  'South Africa': '🇿🇦', 'Korea': '🇰🇷', 'India': '🇮🇳',
-  'Argentina': '🇦🇷', 'Malaysia': '🇲🇾', 'Kazakhstan': '🇰🇿',
-};
-
-function getFlag(country: string): string {
-  if (COUNTRY_FLAGS[country]) return COUNTRY_FLAGS[country];
-  const match = Object.keys(COUNTRY_FLAGS).find(
-    k => country.toLowerCase().includes(k.toLowerCase()) ||
-         k.toLowerCase().includes(country.toLowerCase())
-  );
-  return match ? COUNTRY_FLAGS[match] : '🏁';
-}
-
 function formatDate(dateStr: string): string {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -37,15 +13,24 @@ interface TrackCellProps {
   country: string;
   eventName: string;
   date: string;
+  getFlagUrl: (filename: string) => string;
 }
 
-function TrackCell({ country, eventName, date }: TrackCellProps) {
+function TrackCell({ country, eventName, date, getFlagUrl }: TrackCellProps) {
+  const filename = `Flag_of_${country.replace(/\s/g, '_')}.png`;
   return (
     <div className="track-cell">
-      <img className="track-cell-image" src={`/src/assets/flags/Flag_of_${country.replace(/\s/g, '_')}.png`} alt={country}></img>
+      <img
+        className="track-cell-image"
+        src={getFlagUrl(filename)}
+        alt={country}
+        onError={e => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
+      />
       <div className="track-cell-info">
         <span className="track-cell-name">{country}</span>
-        <span className="track-cell-meta">{eventName} · {formatDate(date)}</span>
+        <span className="track-cell-meta">
+          {eventName} · {formatDate(date)}
+        </span>
       </div>
     </div>
   );
@@ -57,9 +42,10 @@ interface RaceTableProps {
   races: RaceWeekend[];
   selectedYear: number;
   onSelectRace: (year: number, round: number) => void;
+  getFlagUrl: (filename: string) => string;
 }
 
-export default function RaceTable({ races, selectedYear, onSelectRace }: RaceTableProps) {
+export default function RaceTable({ races, selectedYear, onSelectRace, getFlagUrl }: RaceTableProps) {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
 
   const handleReplay = () => {
@@ -89,6 +75,7 @@ export default function RaceTable({ races, selectedYear, onSelectRace }: RaceTab
                     country={race.country}
                     eventName={race.event_name}
                     date={race.date}
+                    getFlagUrl={getFlagUrl}
                   />
                 </td>
               </tr>
