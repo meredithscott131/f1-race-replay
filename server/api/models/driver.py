@@ -2,12 +2,14 @@
 Driver-related Pydantic models for API validation
 """
 
+from typing import Optional, Tuple
+
 from pydantic import BaseModel, Field
-from typing import Tuple, Optional
 
 
 class DriverPosition(BaseModel):
     """Driver position and telemetry at a specific frame"""
+
     x: float = Field(..., description="X coordinate on track (meters)")
     y: float = Field(..., description="Y coordinate on track (meters)")
     dist: float = Field(..., ge=0, description="Total distance covered (meters)")
@@ -16,11 +18,16 @@ class DriverPosition(BaseModel):
     tyre: float = Field(..., description="Tyre compound (numeric)")
     position: int = Field(..., ge=1, le=20, description="Current position in race")
     speed: float = Field(..., ge=0, description="Speed in km/h")
-    gear: int = Field(..., ge=-1, le=10, description="Current gear (-1=reverse, 0=neutral, 1-8=gears, 10=neutral in some cars)")  # Changed
+    gear: int = Field(
+        ...,
+        ge=-1,
+        le=10,
+        description="Current gear (-1=reverse, 0=neutral, 1-8=gears, 10=neutral in some cars)",
+    )  # Changed
     drs: int = Field(..., ge=0, description="DRS status")
     throttle: float = Field(..., ge=0, le=100, description="Throttle percentage")
     brake: float = Field(..., ge=0, le=100, description="Brake percentage")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -35,30 +42,26 @@ class DriverPosition(BaseModel):
                 "gear": 7,
                 "drs": 0,
                 "throttle": 100.0,
-                "brake": 0.0
+                "brake": 0.0,
             }
         }
 
 
 class DriverColor(BaseModel):
     """Driver team color in RGB"""
+
     code: str = Field(..., min_length=3, max_length=3, description="3-letter driver code")
     color: Tuple[int, int, int] = Field(..., description="RGB color tuple")
-    
+
     class Config:
-        json_schema_extra = {
-            "example": {
-                "code": "VER",
-                "color": [30, 65, 255]
-            }
-        }
+        json_schema_extra = {"example": {"code": "VER", "color": [30, 65, 255]}}
 
 
 class DriverInfo(BaseModel):
     """Basic driver information"""
+
     code: str = Field(..., min_length=3, max_length=3)
     full_name: str
     team: Optional[str] = None
     number: Optional[int] = Field(None, ge=1, le=99)
     color: Optional[Tuple[int, int, int]] = None
-    

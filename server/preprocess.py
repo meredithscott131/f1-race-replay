@@ -8,15 +8,15 @@ Usage:
 
 import argparse
 import json
+import logging
 import math
 import os
 import sys
-import logging
 
 import numpy as np
 import requests
-from supabase import create_client, Client
 from dotenv import load_dotenv
+from supabase import Client, create_client
 
 load_dotenv()
 SUPABASE_URL = os.environ["SUPABASE_URL"]
@@ -27,15 +27,17 @@ logger = logging.getLogger(__name__)
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from core.f1_data import (
+sys.path.insert(0, os.path.dirname(__file__))
+
+from core.f1_data import (  # noqa: E402
+    enable_cache,
+    get_circuit_rotation,
+    get_driver_colors,
+    get_race_telemetry,
+    get_race_weekends_by_year,
+    get_track_shape,
     load_session,
     load_session_minimal,
-    get_track_shape,
-    get_race_telemetry,
-    get_driver_colors,
-    get_circuit_rotation,
-    get_race_weekends_by_year,
-    enable_cache,
 )
 
 
@@ -45,13 +47,14 @@ def get_supabase() -> Client:
 
 # ── JSON serialisation ───────────────────────────────────────────────────────
 
+
 def _sanitize(obj):
     """Recursively coerce numpy scalars and NaN/Inf to JSON-safe Python types."""
     if isinstance(obj, dict):
         return {k: _sanitize(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_sanitize(v) for v in obj]
-    if isinstance(obj, np.bool_):       # must be before np.integer check
+    if isinstance(obj, np.bool_):  # must be before np.integer check
         return bool(obj)
     if isinstance(obj, np.integer):
         return int(obj)
@@ -75,6 +78,7 @@ def sanitize_frames(frames: list) -> list:
 
 # ── Official positions ───────────────────────────────────────────────────────
 
+
 def get_official_positions(session) -> dict[str, int]:
     """Get official race finishing positions.
     Priority: FastF1 session.results → Jolpica API → mid-race lap fallback."""
@@ -82,11 +86,11 @@ def get_official_positions(session) -> dict[str, int]:
 
     # 1. FastF1 session.results
     results = session.results
-    if results is not None and not results.empty and 'Position' in results.columns:
+    if results is not None and not results.empty and "Position" in results.columns:
         pos = {}
         for _, row in results.iterrows():
-            code = row.get('Abbreviation', '')
-            p    = row.get('Position')
+            code = row.get("Abbreviation", "")
+            p = row.get("Position")
             if code and p is not None and not pd.isna(p):
                 pos[code] = int(p)
         if pos:
@@ -95,17 +99,17 @@ def get_official_positions(session) -> dict[str, int]:
 
     # 2. Jolpica (community-maintained Ergast mirror)
     try:
-        year      = session.event['EventDate'].year
-        round_num = session.event['RoundNumber']
-        url  = f"https://api.jolpi.ca/ergast/f1/{year}/{round_num}/results.json"
+        year = session.event["EventDate"].year
+        round_num = session.event["RoundNumber"]
+        url = f"https://api.jolpi.ca/ergast/f1/{year}/{round_num}/results.json"
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
-        races = resp.json()['MRData']['RaceTable']['Races']
+        races = resp.json()["MRData"]["RaceTable"]["Races"]
         if races:
             pos = {}
-            for result in races[0]['Results']:
-                code = result.get('Driver', {}).get('code', '')
-                p    = result.get('position')
+            for result in races[0]["Results"]:
+                code = result.get("Driver", {}).get("code", "")
+                p = result.get("position")
                 if code and p:
                     pos[code] = int(p)
             if pos:
@@ -120,12 +124,12 @@ def get_official_positions(session) -> dict[str, int]:
     if laps.empty:
         return {}
 
-    leader_lap = int(laps['LapNumber'].max())
+    leader_lap = int(laps["LapNumber"].max())
     sample_lap = max(1, leader_lap - 5)
     pos = {}
-    for _, lap in laps[laps['LapNumber'] == sample_lap].iterrows():
-        code = lap.get('Driver', '')
-        p    = lap.get('Position')
+    for _, lap in laps[laps["LapNumber"] == sample_lap].iterrows():
+        code = lap.get("Driver", "")
+        p = lap.get("Position")
         if code and p is not None and not pd.isna(p):
             pos[code] = int(p)
 
@@ -135,6 +139,7 @@ def get_official_positions(session) -> dict[str, int]:
 
 # ── Frame flags ──────────────────────────────────────────────────────────────
 
+
 def mark_retired_drivers(frames: list, session) -> list:
     """Set is_out=True on drivers whose distance stopped increasing more than
     RETIREMENT_THRESHOLD seconds before the race ended (i.e. they retired).
@@ -142,26 +147,25 @@ def mark_retired_drivers(frames: list, session) -> list:
     if not frames:
         return frames
 
-    race_end_t = frames[-1].get('t', 0)
+    race_end_t = frames[-1].get("t", 0)
     RETIREMENT_THRESHOLD = 120  # seconds
 
     last_active: dict[str, float] = {}
-    last_dist:   dict[str, float] = {}
+    last_dist: dict[str, float] = {}
 
     for frame in frames:
-        t = frame.get('t', 0)
-        for code, d in frame.get('drivers', {}).items():
-            dist = d.get('dist')
+        t = frame.get("t", 0)
+        for code, d in frame.get("drivers", {}).items():
+            dist = d.get("dist")
             if dist is None:
                 continue
             prev = last_dist.get(code)
             if prev is None or dist > prev:
                 last_active[code] = t
-                last_dist[code]   = dist
+                last_dist[code] = dist
 
     retired_codes = {
-        code for code, t in last_active.items()
-        if (race_end_t - t) > RETIREMENT_THRESHOLD
+        code for code, t in last_active.items() if (race_end_t - t) > RETIREMENT_THRESHOLD
     }
 
     if not retired_codes:
@@ -170,12 +174,12 @@ def mark_retired_drivers(frames: list, session) -> list:
         logger.info(f"  Retired drivers: {retired_codes}")
 
     for frame in frames:
-        t = frame.get('t', 0)
-        for code, d in frame.get('drivers', {}).items():
+        t = frame.get("t", 0)
+        for code, d in frame.get("drivers", {}).items():
             if code in retired_codes:
-                d['is_out'] = t > last_active.get(code, 0)
+                d["is_out"] = t > last_active.get(code, 0)
             else:
-                d['is_out'] = False
+                d["is_out"] = False
 
     return frames
 
@@ -191,9 +195,9 @@ def freeze_finishing_positions(frames, total_laps, official_positions=None):
     leader_finish_frame = None
 
     for frame_idx, frame in enumerate(frames):
-        for code, d in frame.get('drivers', {}).items():
-            if code not in finish_positions and d.get('lap', 0) > total_laps:
-                finish_positions[code] = official_positions.get(code, d.get('position', 99))
+        for code, d in frame.get("drivers", {}).items():
+            if code not in finish_positions and d.get("lap", 0) > total_laps:
+                finish_positions[code] = official_positions.get(code, d.get("position", 99))
                 if official_positions.get(code) == 1 and leader_finish_frame is None:
                     leader_finish_frame = frame_idx
 
@@ -201,41 +205,45 @@ def freeze_finishing_positions(frames, total_laps, official_positions=None):
     for frame_idx, frame in enumerate(frames):
         after_leader_finished = leader_finish_frame is not None and frame_idx >= leader_finish_frame
 
-        for code, d in frame.get('drivers', {}).items():
-            if d.get('is_out', False):
-                d['finished'] = False
+        for code, d in frame.get("drivers", {}).items():
+            if d.get("is_out", False):
+                d["finished"] = False
                 continue
 
-            lead_lap_finished = code in finish_positions and d.get('lap', 0) > total_laps
+            lead_lap_finished = code in finish_positions and d.get("lap", 0) > total_laps
 
             if lead_lap_finished:
-                d['finished'] = True
-                d['position'] = finish_positions[code]
+                d["finished"] = True
+                d["position"] = finish_positions[code]
             elif after_leader_finished and code in official_positions:
                 # Lapped driver — race is over, apply official position
-                d['finished'] = True
-                d['position'] = official_positions[code]
+                d["finished"] = True
+                d["position"] = official_positions[code]
             else:
-                d['finished'] = False
+                d["finished"] = False
 
     return frames
 
+
 # ── Main pipeline ────────────────────────────────────────────────────────────
+
 
 def process_and_upload(year: int, round: int, supabase: Client, force: bool = False):
     logger.info(f"Processing {year} Round {round}...")
 
     # ── 0. Skip if already uploaded ─────────────────────────────────────────
     if not force:
-        existing = supabase.table("races").select("id").eq("year", year).eq("round", round).execute()
+        existing = (
+            supabase.table("races").select("id").eq("year", year).eq("round", round).execute()
+        )
         if existing.data:
             logger.info("  Already in DB, skipping. Use --force to overwrite.")
             return
 
     # ── 1. Track shape (fast, minimal session load) ──────────────────────────
     logger.info("  Loading track shape...")
-    session_min      = load_session_minimal(year, round, "R")
-    track_frames     = get_track_shape(session_min)
+    session_min = load_session_minimal(year, round, "R")
+    track_frames = get_track_shape(session_min)
     circuit_rotation = get_circuit_rotation(session_min)
 
     n = len(track_frames)
@@ -244,22 +252,22 @@ def process_and_upload(year: int, round: int, supabase: Client, force: bool = Fa
         {"start_index": int(n * 0.85), "end_index": int(n * 0.95)},
     ]
     session_info = {
-        "event_name":   str(session_min.event["EventName"]),
+        "event_name": str(session_min.event["EventName"]),
         "circuit_name": str(session_min.event.get("Location", "Unknown")),
-        "country":      str(session_min.event["Country"]),
-        "date":         str(session_min.event["EventDate"].date()),
+        "country": str(session_min.event["Country"]),
+        "date": str(session_min.event["EventDate"].date()),
     }
     logger.info(f"  Track shape: {n} points")
 
     # ── 2. Full race telemetry ───────────────────────────────────────────────
     logger.info("  Processing race frames (this takes a while on first run)...")
     session_full = load_session(year, round, "R")
-    telemetry    = get_race_telemetry(session_full, "R")
-    total_laps   = telemetry.get("total_laps") or 0
-    all_frames   = telemetry["frames"]
+    telemetry = get_race_telemetry(session_full, "R")
+    total_laps = telemetry.get("total_laps") or 0
+    all_frames = telemetry["frames"]
 
     driver_colors = get_driver_colors(session_full)
-    driver_teams  = {}
+    driver_teams = {}
     for _, row in session_full.results.iterrows():
         code = row.get("Abbreviation")
         team = row.get("TeamName", "Unknown")
@@ -290,76 +298,91 @@ def process_and_upload(year: int, round: int, supabase: Client, force: bool = Fa
     status_data = session_full.track_status
     if status_data is not None and not status_data.empty:
         # Offset: align status times to the same clock as frame t values
-        race_start_offset = session_full.laps['LapStartTime'].min().total_seconds()
+        race_start_offset = session_full.laps["LapStartTime"].min().total_seconds()
         logger.info(f"  Race start offset: {race_start_offset:.1f}s")
 
         for i in range(len(status_data)):
-            row    = status_data.iloc[i]
-            start_t = row['Time'].total_seconds() - race_start_offset
-            end_t   = (status_data.iloc[i + 1]['Time'].total_seconds() - race_start_offset) \
-                      if i + 1 < len(status_data) else None
+            row = status_data.iloc[i]
+            start_t = row["Time"].total_seconds() - race_start_offset
+            end_t = (
+                (status_data.iloc[i + 1]["Time"].total_seconds() - race_start_offset)
+                if i + 1 < len(status_data)
+                else None
+            )
 
             # Skip statuses that ended before the race started
             if end_t is not None and end_t <= 0:
                 continue
 
-            track_statuses.append({
-                'status':     str(row['Status']),
-                'start_time': max(0.0, start_t),
-                'end_time':   end_t,
-            })
+            track_statuses.append(
+                {
+                    "status": str(row["Status"]),
+                    "start_time": max(0.0, start_t),
+                    "end_time": end_t,
+                }
+            )
     logger.info(f"  Track statuses: {len(track_statuses)} entries")
 
     # ── 6. Upload to Supabase ────────────────────────────────────────────────
     logger.info("  Uploading to Supabase...")
 
-    supabase.table("races").upsert({
-        "year":           year,
-        "round":          round,
-        "event_name":     session_info["event_name"],
-        "circuit_name":   session_info["circuit_name"],
-        "country":        session_info["country"],
-        "date":           session_info["date"],
-        "total_laps":     total_laps,
-        "track_statuses": dumps(track_statuses),
-    }, on_conflict="year,round").execute()
+    supabase.table("races").upsert(
+        {
+            "year": year,
+            "round": round,
+            "event_name": session_info["event_name"],
+            "circuit_name": session_info["circuit_name"],
+            "country": session_info["country"],
+            "date": session_info["date"],
+            "total_laps": total_laps,
+            "track_statuses": dumps(track_statuses),
+        },
+        on_conflict="year,round",
+    ).execute()
 
-    supabase.table("track_shapes").upsert({
-        "year":             year,
-        "round":            round,
-        "circuit_rotation": circuit_rotation,
-        "frames":           dumps(track_frames),
-        "drs_zones":        dumps(drs_zones),
-    }, on_conflict="year,round").execute()
+    supabase.table("track_shapes").upsert(
+        {
+            "year": year,
+            "round": round,
+            "circuit_rotation": circuit_rotation,
+            "frames": dumps(track_frames),
+            "drs_zones": dumps(drs_zones),
+        },
+        on_conflict="year,round",
+    ).execute()
 
     supabase.table("race_frames").delete().eq("year", year).eq("round", round).execute()
 
-    CHUNK_SIZE   = 500
-    chunks       = [frames_to_store[i:i+CHUNK_SIZE] for i in range(0, len(frames_to_store), CHUNK_SIZE)]
+    CHUNK_SIZE = 500
+    chunks = [
+        frames_to_store[i : i + CHUNK_SIZE] for i in range(0, len(frames_to_store), CHUNK_SIZE)
+    ]
     total_chunks = len(chunks)
     logger.info(f"  Uploading {total_chunks} frame chunks...")
 
     for idx, chunk in enumerate(chunks):
-        supabase.table("race_frames").insert({
-            "year":               year,
-            "round":              round,
-            "driver_colors":      dumps(driver_colors),
-            "driver_teams":       dumps(driver_teams),
-            "official_positions": dumps(official_positions),
-            "frames":             dumps(chunk),
-            "chunk_index":        idx,
-            "total_chunks":       total_chunks,
-        }).execute()
-        logger.info(f"    Chunk {idx+1}/{total_chunks} uploaded")
+        supabase.table("race_frames").insert(
+            {
+                "year": year,
+                "round": round,
+                "driver_colors": dumps(driver_colors),
+                "driver_teams": dumps(driver_teams),
+                "official_positions": dumps(official_positions),
+                "frames": dumps(chunk),
+                "chunk_index": idx,
+                "total_chunks": total_chunks,
+            }
+        ).execute()
+        logger.info(f"    Chunk {idx + 1}/{total_chunks} uploaded")
 
     logger.info(f"  ✅ Done — {session_info['event_name']} uploaded.")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--year",  type=int, required=True)
+    parser.add_argument("--year", type=int, required=True)
     parser.add_argument("--round", type=int, default=None)
-    parser.add_argument("--all",   action="store_true", help="Process all rounds for the year")
+    parser.add_argument("--all", action="store_true", help="Process all rounds for the year")
     parser.add_argument("--force", action="store_true", help="Re-upload even if already in DB")
     args = parser.parse_args()
 
@@ -368,7 +391,7 @@ def main():
 
     if args.all:
         weekends = get_race_weekends_by_year(args.year)
-        rounds   = [w["round_number"] for w in weekends]
+        rounds = [w["round_number"] for w in weekends]
         logger.info(f"Processing all {len(rounds)} rounds for {args.year}...")
         for r in rounds:
             try:
