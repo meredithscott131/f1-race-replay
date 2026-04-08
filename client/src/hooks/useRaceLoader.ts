@@ -7,24 +7,24 @@ import type { Frame, TrackStatus } from '../types/api.types';
 interface RaceRef { year: number; round: number; }
 
 export function useRaceLoader() {
-  const [selectedYear, setSelectedYear]       = useState(2024);
-  const [selectedRound, setSelectedRound]     = useState(1);
-  const [allRaces, setAllRaces]               = useState<RaceRef[]>([]);
+  const [selectedYear, setSelectedYear]   = useState(2024);
+  const [selectedRound, setSelectedRound] = useState(1);
+  const [allRaces, setAllRaces]           = useState<RaceRef[]>([]);
 
-  const [trackData, setTrackData]             = useState<TrackData | null>(null);
-  const [frames, setFrames]                   = useState<Frame[]>([]);
-  const [driverColors, setDriverColors]       = useState<Record<string, [number, number, number]>>({});
-  const [driverTeams, setDriverTeams]         = useState<Record<string, string>>({});
-  const [officialPositions, setOfficialPositions] = useState<Record<string, number>>({});
-  const [trackStatuses, setTrackStatuses]     = useState<TrackStatus[]>([]);
+  const [trackData, setTrackData]                     = useState<TrackData | null>(null);
+  const [frames, setFrames]                           = useState<Frame[]>([]);
+  const [driverColors, setDriverColors]               = useState<Record<string, [number, number, number]>>({});
+  const [driverTeams, setDriverTeams]                 = useState<Record<string, string>>({});
+  const [officialPositions, setOfficialPositions]     = useState<Record<string, number>>({});
+  const [trackStatuses, setTrackStatuses]             = useState<TrackStatus[]>([]);
 
-  const [eventName, setEventName]             = useState('');
-  const [circuitName, setCircuitName]         = useState('');
-  const [country, setCountry]                 = useState('');
-  const [totalLaps, setTotalLaps]             = useState<number | undefined>(undefined);
+  const [eventName, setEventName]     = useState('');
+  const [circuitName, setCircuitName] = useState('');
+  const [country, setCountry]         = useState('');
+  const [totalLaps, setTotalLaps]     = useState<number | undefined>(undefined);
 
-  const [loading, setLoading]                 = useState(false);
-  const [error, setError]                     = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
   const loadingIntervalRef = useRef<number | null>(null);
   useEffect(() => () => {
@@ -48,7 +48,7 @@ export function useRaceLoader() {
         const races = await telemetryService.getRaceSchedule(currentYear);
         setAllRaces(races.map(r => ({ year: currentYear, round: r.round_number })));
       } catch {
-        setAllRaces([{ year: currentYear, round: selectedRound }]);
+        setAllRaces([{ year: currentYear, round: 1 }]);
       }
     }
   };
@@ -81,7 +81,7 @@ export function useRaceLoader() {
       setDriverTeams(framesResponse.driver_teams || {});
       setOfficialPositions(framesResponse.official_positions || {});
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to load';
+      const msg    = err instanceof Error ? err.message : 'Failed to load';
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       setError(detail || msg);
     } finally {
@@ -94,26 +94,13 @@ export function useRaceLoader() {
     r => r.year === selectedYear && r.round === selectedRound
   );
 
+  const prevRace = currentRaceIdx > 0                          ? allRaces[currentRaceIdx - 1] : null;
+  const nextRace = currentRaceIdx < allRaces.length - 1        ? allRaces[currentRaceIdx + 1] : null;
+
   const selectRace = (year: number, round: number) => {
     setSelectedYear(year);
     setSelectedRound(round);
     buildAllRaces(year);
-    loadRaceData(year, round);
-  };
-
-  const goToPrevRace = () => {
-    if (currentRaceIdx <= 0) return;
-    const { year, round } = allRaces[currentRaceIdx - 1];
-    setSelectedYear(year);
-    setSelectedRound(round);
-    loadRaceData(year, round);
-  };
-
-  const goToNextRace = () => {
-    if (currentRaceIdx < 0 || currentRaceIdx >= allRaces.length - 1) return;
-    const { year, round } = allRaces[currentRaceIdx + 1];
-    setSelectedYear(year);
-    setSelectedRound(round);
     loadRaceData(year, round);
   };
 
@@ -126,17 +113,14 @@ export function useRaceLoader() {
   };
 
   return {
-    // race metadata
     selectedYear, selectedRound,
     eventName, circuitName, country, totalLaps,
-    // data
     trackData, frames, driverColors, driverTeams, officialPositions, trackStatuses,
-    // status
     loading, error,
-    // nav
-    hasPrevRace: currentRaceIdx > 0,
-    hasNextRace: currentRaceIdx >= 0 && currentRaceIdx < allRaces.length - 1,
-    // handlers
-    selectRace, goToPrevRace, goToNextRace, loadRaceData, reset,
+    hasPrevRace: prevRace !== null,
+    hasNextRace: nextRace !== null,
+    prevRace,
+    nextRace,
+    selectRace, loadRaceData, reset,
   };
 }
