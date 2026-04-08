@@ -145,7 +145,11 @@ export default function AnimatedTrackCanvas({
         const r     = i % 2 === 0 ? outerR : innerR;
         const angle = (Math.PI / 5) * i - Math.PI / 2;
         const x = cx + r * Math.cos(angle), y = cy + r * Math.sin(angle);
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        if (i === 0) {
+          ctx.moveTo(x, y); 
+        } else { 
+          ctx.lineTo(x, y); 
+        }
       }
       ctx.closePath();
       ctx.fillStyle = '#FFD700';
@@ -286,8 +290,8 @@ export default function AnimatedTrackCanvas({
 
     ctx.restore();
   }, [trackData, frames, currentFrame, driverColors, interpolatedFrame,
-      focusedDrivers, worldToScreen, comparisonMode,
-      comparisonPositions, comparisonDriverColor]);
+    leaderCode, focusedDrivers, worldToScreen, comparisonMode,
+    comparisonPositions, comparisonDriverColor]);
 
   useEffect(() => { draw(); }, [draw]);
 

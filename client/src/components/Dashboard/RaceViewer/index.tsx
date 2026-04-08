@@ -12,7 +12,7 @@ import './index.css';
 import Leaderboard from '../Leaderboard';
 import SessionBanner from '../SessionBanner';
 
-const parse = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
+const parse = (val: unknown) => typeof val === 'string' ? JSON.parse(val) : val;
 const CHUNK_SIZE = 500;
 
 interface RaceViewerProps {
@@ -107,7 +107,11 @@ export default function RaceViewer({
   const handleToggleDriver = useCallback((code: string) => {
     setFocusedDrivers(prev => {
       const next = new Set(prev);
-      next.has(code) ? next.delete(code) : next.add(code);
+      if (next.has(code)) {
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
       return next;
     });
   }, []);
@@ -143,7 +147,7 @@ export default function RaceViewer({
       fetchingChunksRef.current.clear();
       return;
     }
-    supabase
+    void supabase
       .from('races')
       .select('year, round')
       .eq('circuit_name', circuitName)
@@ -166,7 +170,7 @@ export default function RaceViewer({
 
     toFetch.forEach(race => fetchingChunksRef.current.add(`${race.year}-${chunkIdx}`));
 
-    Promise.all(toFetch.map(async race => {
+    void Promise.all(toFetch.map(async race => {
       const key = `${race.year}-${chunkIdx}`;
       const { data } = await supabase
         .from('race_frames').select('frames')
@@ -295,7 +299,7 @@ export default function RaceViewer({
       const event = buildRaceEvent(status, ++eventCounterRef.current);
       if (event) setActiveEvent(event);
     }
-  }, [displayFrame?.t, sortedStatuses]);
+  }, [displayFrame, sortedStatuses]);
 
   return (
     <div className="race-viewer">

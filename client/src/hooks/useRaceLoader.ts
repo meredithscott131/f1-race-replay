@@ -80,8 +80,10 @@ export function useRaceLoader() {
       setDriverColors(framesResponse.driver_colors);
       setDriverTeams(framesResponse.driver_teams || {});
       setOfficialPositions(framesResponse.official_positions || {});
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to load');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load';
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(detail || msg);
     } finally {
       setLoading(false);
     }

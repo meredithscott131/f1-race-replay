@@ -1,9 +1,9 @@
 import { supabase } from '../lib/supabase';
 import type { RaceWeekend } from '../types/race.types';
-import type { RaceFramesResponse } from '../types/api.types';
+import type { Frame, RaceFramesResponse } from '../types/api.types';
 import type { TrackDataResponse } from '../types/track-api.types';
 
-const parse = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
+const parse = (val: unknown) => typeof val === 'string' ? JSON.parse(val) : val;
 
 export const telemetryService = {
 
@@ -14,7 +14,7 @@ export const telemetryService = {
       .order('year', { ascending: false });
 
     if (error) throw new Error(error.message);
-    const years = [...new Set((data ?? []).map((r: any) => r.year as number))];
+    const years = [...new Set((data ?? []).map((r: { year: number }) => r.year))];
     return { years };
   },
 
@@ -82,7 +82,7 @@ export const telemetryService = {
 
     const totalChunks: number = meta.total_chunks;
 
-    const chunkFrames: any[][] = [];
+    const chunkFrames: unknown[][] = [];
     for (let i = 0; i < totalChunks; i++) {
       const { data, error } = await supabase
         .from('race_frames')
@@ -96,7 +96,7 @@ export const telemetryService = {
       chunkFrames.push(parse(data.frames));
     }
 
-    const allFrames = chunkFrames.flat();
+    const allFrames = chunkFrames.flat() as Frame[];
 
     return {
       frames:             allFrames,

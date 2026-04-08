@@ -22,7 +22,7 @@ interface DriverSummaryPanelProps {
 }
 
 export default function DriverSummaryPanel({
-  circuitName, driverCodes, driverColors, driverTeams,
+  circuitName, driverCodes, driverColors,
   selectedDriver, onDriverSelect, onClose,
 }: DriverSummaryPanelProps) {
   const [results, setResults]   = useState<CircuitResult[]>([]);

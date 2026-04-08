@@ -1,4 +1,4 @@
-import type { Point, TrackBounds, TrackData } from '../types/track.types';
+import type { Point, TrackData } from '../types/track.types';
 import "../styles/variables.css";
 
 export class TrackRenderer {

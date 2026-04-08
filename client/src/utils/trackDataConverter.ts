@@ -1,5 +1,6 @@
 import type { TrackData, Point } from '../types/track.types';
 import type { TrackFrame } from '../types/track-api.types';
+import type { Frame } from '../types/api.types';
 
 /**
  * Build track from lightweight track frames (first lap only)
@@ -156,40 +157,8 @@ function offsetPathImproved(path: Point[], distance: number): Point[] {
   return offsetPoints;
 }
 
-/**
- * Smooth a path using moving average
- */
-function smoothPath(path: Point[], windowSize: number = 5): Point[] {
-  if (path.length <= windowSize) {
-    return path;
-  }
-
-  const smoothed: Point[] = [];
-  const halfWindow = Math.floor(windowSize / 2);
-
-  for (let i = 0; i < path.length; i++) {
-    let sumX = 0;
-    let sumY = 0;
-    let count = 0;
-
-    for (let j = -halfWindow; j <= halfWindow; j++) {
-      const idx = Math.max(0, Math.min(path.length - 1, i + j));
-      sumX += path[idx].x;
-      sumY += path[idx].y;
-      count++;
-    }
-
-    smoothed.push({
-      x: sumX / count,
-      y: sumY / count,
-    });
-  }
-
-  return smoothed;
-}
-
 // Keep old function for backward compatibility
-export function extractTrackFromTelemetry(frames: any[]): TrackData | null {
+export function extractTrackFromTelemetry(frames: Frame[]): TrackData | null {
   console.warn('Using legacy extractTrackFromTelemetry - consider using buildTrackFromFrames');
   
   if (!frames || frames.length === 0) {
@@ -204,7 +173,7 @@ export function extractTrackFromTelemetry(frames: any[]): TrackData | null {
     const drivers = Object.values(frame.drivers);
     
     for (const driver of drivers) {
-      allPoints.push({ x: (driver as any).x, y: (driver as any).y });
+      allPoints.push({ x: (driver as unknown as { x: number }).x, y: (driver as unknown as { x: number; y: number }).y });
     }
   }
 

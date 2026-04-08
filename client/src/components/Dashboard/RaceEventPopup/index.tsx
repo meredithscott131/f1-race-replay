@@ -62,8 +62,6 @@ const STATUS_CONFIG: Record<string, Omit<RaceEvent, 'id' | 'status'>> = {
   },
 };
 
-const DISMISS_MS = 4000;
-
 interface RaceEventPopupProps {
   event: RaceEvent | null;
   isActive: boolean;
