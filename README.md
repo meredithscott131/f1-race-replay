@@ -8,12 +8,12 @@ A Formula 1 race visualisation web app that turns accurate simulation data into 
 > This fork migrates the project to a full-stack React + TypeScript architecture while preserving the original Python data pipeline.
 
 ## Screenshots
-<img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Screenshot1.png" alt="Alt text" width="500">
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/Screenshot1.png" alt="Alt text" width="500">
 
 ## Wireframes
-<img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Wireframe1.png" alt="Alt text" width="500">
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/Wireframe1.png" alt="Alt text" width="500">
 
-<img src="https://github.com/meredithscott131/f1-race-replay/blob/react-setup/shared/images/Wireframe2.png" alt="Alt text" width="500">
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/Wireframe2.png" alt="Alt text" width="500">
 
 ## Running Locally
 
