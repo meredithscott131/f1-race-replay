@@ -1,10 +1,23 @@
 import type { WeatherData } from '../../../types/api.types';
 import './index.css';
 
+/**
+ * Props for the WeatherWidget component.
+ *
+ * @property {WeatherData | null} [weather] - Current weather data to display. Renders nothing when null or undefined.
+ */
 interface WeatherWidgetProps {
   weather?: WeatherData | null;
 }
 
+/**
+ * Ordered list of weather metrics rendered as rows inside the widget grid.
+ * Each entry declares a short label, an SVG icon, and a `value` extractor that
+ * returns a formatted string or `null` when the underlying field is unavailable.
+ * Rows that return `null` are silently skipped during rendering.
+ *
+ * Metrics: AIR (air temperature), TRK (track temperature), HUM (humidity), WND (wind speed).
+ */
 const WEATHER_ROWS: {
   label: string;
   icon: React.ReactNode;
@@ -48,6 +61,19 @@ const WEATHER_ROWS: {
   },
 ];
 
+/**
+ * WeatherWidget is a compact sidebar panel that displays the current session
+ * weather conditions. It shows a WET/DRY status badge at the top, followed by
+ * a grid of individual metric rows (air temp, track temp, humidity, wind speed).
+ *
+ * The widget gains a `weather-widget--wet` CSS modifier when it is raining,
+ * and metric rows whose values are unavailable are omitted from the grid entirely.
+ *
+ * Renders nothing when `weather` is null or undefined.
+ *
+ * @param {WeatherWidgetProps} props - Component props.
+ * @returns {JSX.Element | null} The rendered weather widget, or null if no data is available.
+ */
 export default function WeatherWidget({ weather }: WeatherWidgetProps) {
   if (!weather) return null;
 

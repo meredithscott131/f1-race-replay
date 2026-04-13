@@ -1,6 +1,17 @@
 import { useDriverSummary } from "../../../hooks/useDriverSummary";
 import './index.css';
 
+/**
+ * Props for the DriverSummaryPanel component.
+ *
+ * @property {string} circuitName - The name of the current circuit being viewed.
+ * @property {string[]} driverCodes - Array of driver codes to populate the selector.
+ * @property {Record<string, [number, number, number]>} driverColors - Map of driver code to RGB color tuple.
+ * @property {Record<string, string>} driverTeams - Map of driver code to team name.
+ * @property {string} selectedDriver - The currently selected driver code.
+ * @property {(code: string) => void} onDriverSelect - Callback fired when the user selects a driver.
+ * @property {() => void} onClose - Callback fired when the panel close button is clicked.
+ */
 interface DriverSummaryPanelProps {
   circuitName: string;
   driverCodes: string[];
@@ -11,6 +22,14 @@ interface DriverSummaryPanelProps {
   onClose: () => void;
 }
 
+/**
+ * DriverSummaryPanel displays historical race results for a selected driver
+ * at a given circuit. It includes a driver selector, aggregate statistics
+ * (race count, best finish, wins, DNFs), and a per-year result list.
+ *
+ * @param {DriverSummaryPanelProps} props - Component props.
+ * @returns {JSX.Element} The rendered driver summary panel.
+ */
 export default function DriverSummaryPanel({
   circuitName, driverCodes, driverColors,
   selectedDriver, onDriverSelect, onClose,

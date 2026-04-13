@@ -6,6 +6,17 @@ import F1Header from './F1Header';
 import '../../../styles/variables.css';
 import './index.css';
 
+/**
+ * Props for the Leaderboard component.
+ *
+ * @property {Frame | null} currentFrame - The latest telemetry frame. Renders nothing when null.
+ * @property {Record<string, [number, number, number]>} driverColors - Map of driver code to RGB color tuple used for accent colors.
+ * @property {Record<string, string>} [driverTeams] - Optional map of driver code to team name, used to resolve team logos.
+ * @property {number} [totalLaps] - Total scheduled laps in the race, displayed alongside the current lap counter.
+ * @property {Record<string, number>} [officialPositions] - Optional override map of driver code to official race position.
+ * @property {Set<string>} focusedDrivers - Set of driver codes currently highlighted; all others are dimmed.
+ * @property {(code: string) => void} onToggleDriver - Callback fired when a row is clicked to focus or unfocus a driver.
+ */
 interface LeaderboardProps {
   currentFrame: Frame | null;
   driverColors: Record<string, [number, number, number]>;
@@ -16,6 +27,9 @@ interface LeaderboardProps {
   onToggleDriver: (code: string) => void;
 }
 
+/**
+ * Mapping of tyre compound IDs to their display letter and background color.
+ */
 const TYRE_COMPOUNDS: Record<number, { letter: string; bg: string }> = {
   0: { letter: 'S', bg: '#FF0000' },
   1: { letter: 'M', bg: '#FFFF00' },
@@ -24,12 +38,26 @@ const TYRE_COMPOUNDS: Record<number, { letter: string; bg: string }> = {
   4: { letter: 'W', bg: '#0066FF' },
 };
 
+/**
+ * Formats a raw duration in seconds into a `M:SS` display string.
+ *
+ * @param {number} seconds - Total elapsed seconds.
+ * @returns {string} Human-readable time string, e.g. `"1:07"`.
+ */
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
+/**
+ * Leaderboard renders a live race standings panel. Each row shows a driver's
+ * position, team logo, gap to the leader or interval ahead, and current tyre
+ * compound. Rows can be clicked to focus individual drivers, dimming the rest.
+ *
+ * @param {LeaderboardProps} props - Component props.
+ * @returns {JSX.Element | null} The rendered leaderboard, or null if no frame data is available.
+ */
 export default function Leaderboard({
   currentFrame, driverColors, totalLaps, driverTeams,
   officialPositions = {}, focusedDrivers, onToggleDriver,

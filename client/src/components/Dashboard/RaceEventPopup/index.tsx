@@ -1,13 +1,26 @@
 import './index.css';
 
+/**
+ * Represents a single race event notification to display in the popup.
+ *
+ * @property {string} status - The raw status code that triggered this event (e.g. `'4'` for Safety Car).
+ * @property {string} label - Human-readable event name shown in the popup (e.g. `"Safety Car"`).
+ * @property {string} color - CSS color string used for the accent bar and icon tint.
+ * @property {React.ReactNode} icon - SVG icon element representing the event type.
+ * @property {number} id - Monotonically incrementing ID so the same status code can re-trigger the popup.
+ */
 export interface RaceEvent {
   status: string;
   label: string;
   color: string;
   icon: React.ReactNode;
-  id: number; // unique per trigger so same status can re-fire
+  id: number;
 }
 
+/**
+ * Lookup table mapping status codes to their visual configuration.
+ * `id` and `status` are omitted here and supplied at runtime by `buildRaceEvent`.
+ */
 const STATUS_CONFIG: Record<string, Omit<RaceEvent, 'id' | 'status'>> = {
   '2': {
     label: 'Yellow Flag',
@@ -62,17 +75,42 @@ const STATUS_CONFIG: Record<string, Omit<RaceEvent, 'id' | 'status'>> = {
   },
 };
 
+/**
+ * Props for the RaceEventPopup component.
+ *
+ * @property {RaceEvent | null} event - The event to display; renders nothing when null.
+ * @property {boolean} isActive - Controls the visible/hidden CSS modifier on the popup.
+ */
 interface RaceEventPopupProps {
   event: RaceEvent | null;
   isActive: boolean;
 }
 
+/**
+ * Factory function that constructs a `RaceEvent` object from a raw status code and
+ * a unique trigger ID. Returns `null` for unrecognised status codes so callers can
+ * safely discard events that have no configured display style.
+ *
+ * @param {string} status - Raw track status code (e.g. `'4'`).
+ * @param {number} id - Unique numeric ID for this trigger; increment per status change
+ *   to allow the same status code to re-animate the popup.
+ * @returns {RaceEvent | null} A fully constructed `RaceEvent`, or null if the status is unknown.
+ */
 export function buildRaceEvent(status: string, id: number): RaceEvent | null {
   const config = STATUS_CONFIG[status];
   if (!config) return null;
   return { ...config, status, id };
 }
 
+/**
+ * RaceEventPopup displays a transient notification banner when a notable track
+ * event occurs (flag, safety car, etc.). Visibility is driven by the `isActive`
+ * prop via a CSS modifier class, allowing the parent to control show/hide timing.
+ * Renders nothing when `event` is null.
+ *
+ * @param {RaceEventPopupProps} props - Component props.
+ * @returns {JSX.Element | null} The popup banner, or null when no event is provided.
+ */
 export default function RaceEventPopup({ event, isActive }: RaceEventPopupProps) {
   if (!event) return null;
 

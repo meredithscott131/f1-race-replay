@@ -1,17 +1,29 @@
-// ── index.tsx ────────────────────────────────────────────────────────────────
 import { useState } from 'react';
-import type { WeatherData } from '../../../types/api.types';
-import WeatherWidget from '../Weather';
 import './index.css';
 
+/**
+ * Props for the Navbar component.
+ *
+ * @property {() => void} onHome - Callback fired when the home button is clicked.
+ * @property {() => void} [onToggleComparison] - Optional callback to toggle the Driver Summary panel.
+ * @property {boolean} [isComparisonMode] - When true, the Driver Summary button renders in its active state.
+ */
 interface NavbarProps {
   onHome: () => void;
   onToggleComparison?: () => void;
   isComparisonMode?: boolean;
-  weather?: WeatherData | null;
 }
 
-export default function Navbar({ onHome, onToggleComparison, isComparisonMode, weather }: NavbarProps) {
+/**
+ * Navbar is the primary vertical navigation sidebar. It exposes three actions:
+ * - **Home** — navigates back to the root view.
+ * - **Driver Summary** — toggles the driver comparison panel.
+ * - **About** — opens a modal with project credits and a GitHub link.
+ *
+ * @param {NavbarProps} props - Component props.
+ * @returns {JSX.Element} The rendered navbar and, conditionally, the About modal.
+ */
+export default function Navbar({ onHome, onToggleComparison, isComparisonMode }: NavbarProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -24,7 +36,6 @@ export default function Navbar({ onHome, onToggleComparison, isComparisonMode, w
             </svg>
           </button>
 
-          
           <button
             className={`nav-btn nav-info${isComparisonMode ? ' nav-btn--active' : ''}`}
             onClick={onToggleComparison}
@@ -40,10 +51,6 @@ export default function Navbar({ onHome, onToggleComparison, isComparisonMode, w
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
             </svg>
           </button>
-        </div>
-
-        <div className="navbar-bottom">
-          <WeatherWidget weather={weather} />
         </div>
       </nav>
 

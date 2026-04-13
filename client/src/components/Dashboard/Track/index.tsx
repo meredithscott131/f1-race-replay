@@ -3,6 +3,20 @@ import type { TrackData, Point } from '../../../types/track.types';
 import type { Frame } from '../../../types/api.types';
 import './index.css';
 
+/**
+ * Props for the AnimatedTrackCanvas component.
+ *
+ * @property {TrackData | null} [trackData] - Static track geometry (boundaries, DRS zones, bounds).
+ * @property {Frame[]} [frames] - Full ordered array of telemetry frames for the session.
+ * @property {Record<string, [number, number, number]>} [driverColors] - Map of driver code to RGB color tuple.
+ * @property {number} currentFrame - Index into `frames` representing the current playback position.
+ * @property {Frame | null} [interpolatedFrame] - Smoothly interpolated frame for sub-frame rendering; takes priority over `frames[currentFrame]`.
+ * @property {string | null} [leaderCode] - Driver code of the current race leader; a gold star is drawn above their dot.
+ * @property {Set<string>} [focusedDrivers] - When non-empty, all drivers outside this set are dimmed to ghost dots.
+ * @property {boolean} [comparisonMode] - When true, live driver dots are hidden and historical comparison dots are shown instead.
+ * @property {{ year: number; x: number; y: number; is_retired: boolean }[]} [comparisonPositions] - Per-year historical positions for the selected comparison driver.
+ * @property {[number, number, number]} [comparisonDriverColor] - RGB color for the comparison driver's dots; falls back to white.
+ */
 interface AnimatedTrackCanvasProps {
   trackData?: TrackData | null;
   frames?: Frame[];
@@ -21,6 +35,20 @@ const ZOOM_MAX    = 5;
 const FOLLOW_ZOOM = 5;
 const HIT_RADIUS  = 12;
 
+/**
+ * AnimatedTrackCanvas renders the live F1 circuit map on an HTML5 canvas. It handles:
+ * - **Track drawing** — outer/inner boundaries, DRS zones (green), and a checkered finish line.
+ * - **Driver dots** — colored dots with code labels; focused drivers are highlighted, others dimmed.
+ * - **Leader star** — a gold star drawn above the current race leader's dot.
+ * - **Comparison mode** — replaces live dots with per-year historical position dots for a selected driver.
+ * - **Camera controls** — scroll-to-zoom (zoom-to-cursor), click-and-drag panning, and click-to-follow a driver.
+ *
+ * All camera state (zoom, pan, follow target) is stored in refs so mutations never trigger re-renders.
+ * The canvas is redrawn imperatively via the `draw` callback whenever props change or interaction occurs.
+ *
+ * @param {AnimatedTrackCanvasProps} props - Component props.
+ * @returns {JSX.Element} A `<div>` container holding the `<canvas>` and a camera-reset button.
+ */
 export default function AnimatedTrackCanvas({
   trackData, frames, driverColors, currentFrame, interpolatedFrame,
   leaderCode, focusedDrivers, comparisonMode,
@@ -43,6 +71,14 @@ export default function AnimatedTrackCanvas({
   const dragStart      = useRef<{ x: number; y: number; panX: number; panY: number }>({ x: 0, y: 0, panX: 0, panY: 0 });
   const followedDriver = useRef<string | null>(null);
 
+  /**
+   * Projects a world-space point to CSS-pixel canvas coordinates.
+   * Applies the optimal rotation angle, scale, and translation offset
+   * computed by `calculateScaling`.
+   *
+   * @param {Point} point - World-space coordinate to transform.
+   * @returns {Point} Corresponding CSS-pixel position on the canvas.
+   */
   const worldToScreen = useCallback((point: Point): Point => {
     const { x: cx, y: cy } = centroidRef.current;
     const cos = Math.cos(optimalAngleRef.current);
@@ -55,6 +91,14 @@ export default function AnimatedTrackCanvas({
     };
   }, []);
 
+  /**
+   * Computes the optimal rotation angle, scale, and canvas offsets so the track
+   * fills as much of the available canvas area as possible. Iterates over 180
+   * candidate angles in 1° steps, picking the rotation that yields the largest
+   * uniform scale without clipping.
+   *
+   * Stores results in `optimalAngleRef`, `scaleRef`, `offsetXRef`, and `offsetYRef`.
+   */
   const calculateScaling = useCallback(() => {
     if (!trackData || !canvasRef.current) return;
     const canvas  = canvasRef.current;
@@ -103,7 +147,18 @@ export default function AnimatedTrackCanvas({
     offsetYRef.current = cssHeight / 2 + (maxRX + minRX) / 2 * bestScale;
   }, [trackData]);
 
-  // ── Core draw ─────────────────────────────────────────────────────────────
+  /**
+   * Imperatively redraws the entire canvas. Called after every prop change and
+   * after any camera interaction. The draw order is:
+   * 1. Black background fill.
+   * 2. Track boundaries and DRS zones.
+   * 3. Checkered finish line.
+   * 4. Driver dots (normal mode) or historical comparison dots (comparison mode).
+   * 5. Leader star overlay.
+   *
+   * When a driver is being followed, the pan offsets are updated first so the
+   * camera stays centred on that driver before the frame is painted.
+   */
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !trackData) return;
@@ -293,9 +348,14 @@ export default function AnimatedTrackCanvas({
     leaderCode, focusedDrivers, worldToScreen, comparisonMode,
     comparisonPositions, comparisonDriverColor]);
 
+  /** Redraw whenever any draw dependency changes. */
   useEffect(() => { draw(); }, [draw]);
 
-  // ── Resize ────────────────────────────────────────────────────────────────
+  /**
+   * Syncs the canvas buffer dimensions to the container's CSS size, accounting
+   * for device pixel ratio, then recalculates scaling and redraws.
+   * Runs once on mount and re-attaches on every `window.resize` event.
+   */
   useEffect(() => {
     const handleResize = () => {
       if (!canvasRef.current || !containerRef.current) return;
@@ -313,9 +373,15 @@ export default function AnimatedTrackCanvas({
     return () => window.removeEventListener('resize', handleResize);
   }, [calculateScaling, draw]);
 
+  /** Recalculate scaling whenever track data changes (e.g. switching circuits). */
   useEffect(() => { calculateScaling(); }, [calculateScaling]);
 
-  // ── Wheel zoom ────────────────────────────────────────────────────────────
+  /**
+   * Handles scroll-wheel zoom, keeping the point under the cursor stationary.
+   * Scrolling up zooms in (×1.1), scrolling down zooms out (×0.9).
+   * Zoom is clamped to [ZOOM_MIN, ZOOM_MAX]. Cancels any active driver follow.
+   * Uses a non-passive listener so `preventDefault` can suppress page scroll.
+   */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -337,7 +403,17 @@ export default function AnimatedTrackCanvas({
     return () => canvas.removeEventListener('wheel', onWheel);
   }, [draw]);
 
-  // ── Pan + click follow ────────────────────────────────────────────────────
+  /**
+   * Handles three related interactions on the canvas:
+   * - **Drag** — panning; dragging more than 4 px also cancels any active driver follow.
+   * - **Click** (mousedown → mouseup without significant movement) — if a driver dot
+   *   is within `HIT_RADIUS` px of the click, the camera locks onto that driver at
+   *   `FOLLOW_ZOOM`. Clicking the same driver again releases the follow and resets the camera.
+   *   Clicks are ignored in comparison mode.
+   *
+   * Mouse-move and mouse-up listeners are attached to `window` so dragging outside
+   * the canvas boundary continues to work correctly.
+   */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -415,7 +491,10 @@ export default function AnimatedTrackCanvas({
     };
   }, [draw, frames, currentFrame, interpolatedFrame, worldToScreen, comparisonMode]);
 
-  // ── Reset ─────────────────────────────────────────────────────────────────
+  /**
+   * Resets the camera to its default state: no followed driver, zoom 1×, no pan.
+   * Intended to be bound to a "Reset Camera" button in the rendered JSX.
+   */
   const handleResetCamera = () => {
     followedDriver.current = null;
     zoomRef.current = 1;

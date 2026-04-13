@@ -8,7 +8,6 @@
   overflow: hidden;
 }
 
-/* ── Header ── */
 .dc-header {
   display: flex;
   align-items: center;
@@ -42,7 +41,6 @@
 
 .dc-close:hover { opacity: 1; }
 
-/* ── Circuit label ── */
 .dc-circuit {
   display: flex;
   align-items: center;
@@ -58,7 +56,6 @@
   flex-shrink: 0;
 }
 
-/* ── Driver selector ── */
 .dc-select-wrapper {
   position: relative;
   padding: 8px 10px;
@@ -88,7 +85,6 @@
   border-color: var(--color-red);
 }
 
-/* Coloured accent bar under the select when a driver is chosen */
 .dc-select-accent {
   position: absolute;
   bottom: 8px;
@@ -98,7 +94,6 @@
   pointer-events: none;
 }
 
-/* ── Loading / error / empty ── */
 .dc-loading {
   display: flex;
   align-items: center;
@@ -136,7 +131,6 @@
   opacity: 0.6;
 }
 
-/* ── Summary stats ── */
 .dc-summary {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -172,7 +166,6 @@
   justify-items: center;
 }
 
-/* ── Results list ── */
 .dc-results {
   flex: 1;
   overflow-y: auto;

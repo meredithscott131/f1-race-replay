@@ -3,6 +3,15 @@ import type { WeatherData } from '../../../types/api.types';
 import '../Weather/index.css';
 import './index.css';
 
+/**
+ * Props for the SessionBanner component.
+ *
+ * @property {string} [eventName] - Full race event name (e.g. "Monaco Grand Prix"). Falls back to "GRAND PRIX" when absent.
+ * @property {string} [circuitName] - Circuit name displayed below the flag (e.g. "Circuit de Monaco").
+ * @property {string} [country] - Country name used to resolve the flag image filename; spaces are replaced with underscores.
+ * @property {number} [year] - Season year prepended to the event name; omitted in comparison mode.
+ * @property {WeatherData | null} [weather] - Live weather data; the strip is hidden when null or undefined.
+ */
 interface SessionBannerProps {
   eventName?: string;
   circuitName?: string;
@@ -11,6 +20,14 @@ interface SessionBannerProps {
   weather?: WeatherData | null;
 }
 
+/**
+ * Ordered list of weather metrics to display in the banner strip.
+ * Each entry declares a short label, an SVG icon, and a `value` extractor that
+ * returns a formatted string or `null` when the underlying field is unavailable.
+ * Items that return `null` are silently skipped during rendering.
+ *
+ * Metrics: AIR (air temperature), TRK (track temperature), HUM (humidity), WND (wind speed).
+ */
 const WEATHER_ITEMS: {
   label: string;
   icon: React.ReactNode;
@@ -38,6 +55,19 @@ const WEATHER_ITEMS: {
   },
 ];
 
+/**
+ * SessionBanner displays contextual session information at the top of the race canvas column.
+ * It is split into two sections:
+ * - **Left** — year and event name.
+ * - **Right** — country flag, circuit name, and an optional weather strip.
+ *
+ * The weather strip shows a WET/DRY status badge followed by individual metric chips
+ * for air temp, track temp, humidity, and wind speed. Metrics with null values are omitted.
+ * The strip gains a `weather-strip--wet` modifier when it is raining.
+ *
+ * @param {SessionBannerProps} props - Component props.
+ * @returns {JSX.Element} The rendered session banner.
+ */
 export default function SessionBanner({ eventName, circuitName, country, year, weather }: SessionBannerProps) {
   return (
     <div className="session-banner">

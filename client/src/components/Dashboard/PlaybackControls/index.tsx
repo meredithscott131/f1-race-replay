@@ -2,6 +2,27 @@ import type { TrackStatus } from '../../../types/api.types';
 import { usePlaybackControls } from '../../../hooks/usePlaybackControls';
 import './index.css';
 
+/**
+ * Props for the PlaybackControls component.
+ *
+ * @property {boolean} isPaused - Whether playback is currently paused.
+ * @property {number} playbackSpeed - Current playback speed multiplier (e.g. 1, 2, 4).
+ * @property {number} currentFrame - Index of the frame currently being displayed.
+ * @property {number} totalFrames - Total number of frames in the replay.
+ * @property {number} [totalLaps] - Total laps in the race; enables the lap navigator when > 0.
+ * @property {number[]} [lapFrameIndices] - Frame index at which each lap begins; used to render tick marks and lap seeks.
+ * @property {TrackStatus[]} [trackStatuses] - Array of track status intervals rendered as colored segments on the progress bar.
+ * @property {number} [totalTime] - Total race duration in seconds; required to position status segments correctly.
+ * @property {() => void} onPlayPause - Callback to toggle play/pause.
+ * @property {(speed: number) => void} onSpeedChange - Callback fired with the new speed multiplier.
+ * @property {(frame: number) => void} onSeek - Callback to jump to a specific frame index.
+ * @property {(lap: number) => void} onSeekToLap - Callback to jump to the start frame of a given lap.
+ * @property {() => void} onRestart - Callback to restart replay from frame 0.
+ * @property {() => void} [onPrevRace] - Optional callback to load the previous race.
+ * @property {() => void} [onNextRace] - Optional callback to load the next race.
+ * @property {boolean} [hasPrevRace] - Whether a previous race is available; disables the button when false.
+ * @property {boolean} [hasNextRace] - Whether a next race is available; disables the button when false.
+ */
 interface PlaybackControlsProps {
   isPaused: boolean;
   playbackSpeed: number;
@@ -22,6 +43,10 @@ interface PlaybackControlsProps {
   hasNextRace?: boolean;
 }
 
+/**
+ * Maps track status codes to their display color and human-readable label.
+ * Used to render colored segments on the progress bar and as tooltip text.
+ */
 const STATUS_STYLES: Record<string, { color: string; label: string }> = {
   '2': { color: '#FFD700', label: 'Yellow Flag'        },
   '4': { color: '#F97316', label: 'Safety Car'         },
@@ -30,6 +55,17 @@ const STATUS_STYLES: Record<string, { color: string; label: string }> = {
   '7': { color: '#FDE68A', label: 'VSC Ending'         },
 };
 
+/**
+ * PlaybackControls renders the full replay control bar, including:
+ * - A clickable progress bar with lap tick marks and colored track-status segments.
+ * - Transport buttons: restart, rewind 250 frames, play/pause, forward 250 frames.
+ * - A speed selector (decrease / current value / increase).
+ * - An optional lap navigator (previous lap, direct input, next lap) shown when `totalLaps > 0`.
+ * - Previous/next race navigation buttons on either side of the control strip.
+ *
+ * @param {PlaybackControlsProps} props - Component props.
+ * @returns {JSX.Element} The rendered playback control bar.
+ */
 export default function PlaybackControls({
   isPaused, playbackSpeed, currentFrame, totalFrames,
   totalLaps = 0, lapFrameIndices = [],
@@ -78,6 +114,7 @@ export default function PlaybackControls({
           </div>
         )}
 
+        {/* Progress fill, lap tick marks, and draggable handle */}
         <div className="progress-bar">
           <div className="progress-fill" style={{ width: `${progress}%` }} />
           {totalFrames > 0 && lapFrameIndices.map((frameIdx, i) => {

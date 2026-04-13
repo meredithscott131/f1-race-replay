@@ -13,6 +13,26 @@ import type { TrackData } from '../../../types/track.types';
 import type { Frame, TrackStatus } from '../../../types/api.types';
 import './index.css';
 
+/**
+ * Props for the RaceViewer component.
+ *
+ * @property {TrackData} trackData - Static track geometry used to render the circuit map.
+ * @property {Frame[]} frames - Ordered array of telemetry frames for the full race replay.
+ * @property {Record<string, [number, number, number]>} driverColors - Map of driver code to RGB color tuple.
+ * @property {Record<string, string>} driverTeams - Map of driver code to team name.
+ * @property {Record<string, number>} [officialPositions] - Optional override map of driver code to official finishing position.
+ * @property {TrackStatus[]} [trackStatuses] - Array of track status intervals (flags, safety cars) for the session.
+ * @property {string} [eventName] - Display name of the race event (e.g. "Monaco Grand Prix").
+ * @property {string} [circuitName] - Name of the circuit, used by the DriverSummaryPanel for historical lookups.
+ * @property {string} [country] - Country of the event, shown in the SessionBanner.
+ * @property {number} [year] - Season year; hidden from the SessionBanner while comparison mode is active.
+ * @property {number} [totalLaps] - Total scheduled laps, passed to the leaderboard and playback controls.
+ * @property {() => void} onHome - Callback to navigate back to the race selection screen.
+ * @property {() => void} [onPrevRace] - Optional callback to load the previous race session.
+ * @property {() => void} [onNextRace] - Optional callback to load the next race session.
+ * @property {boolean} [hasPrevRace] - Whether a previous race is available for navigation.
+ * @property {boolean} [hasNextRace] - Whether a next race is available for navigation.
+ */
 interface RaceViewerProps {
   trackData: TrackData;
   frames: Frame[];
@@ -32,6 +52,18 @@ interface RaceViewerProps {
   hasNextRace?: boolean;
 }
 
+/**
+ * Determines the driver code of the current race leader from a telemetry frame.
+ * Prioritises official finishing positions when available, falling back to the
+ * frame's own position data. Retired drivers (`is_out`) are excluded from consideration.
+ *
+ * Finished drivers are always sorted ahead of still-racing drivers to correctly
+ * reflect the leaderboard once the chequered flag has fallen.
+ *
+ * @param {Frame | null} frame - The current display frame; returns null immediately when absent.
+ * @param {Record<string, number>} officialPositions - Map of driver code to official position.
+ * @returns {string | null} The driver code of the leader, or null if it cannot be determined.
+ */
 function deriveLeaderCode(
   frame: Frame | null,
   officialPositions: Record<string, number>,
@@ -50,6 +82,22 @@ function deriveLeaderCode(
   return sorted[0]?.[0] ?? null;
 }
 
+/**
+ * RaceViewer is the top-level race replay screen. It composes all major UI regions:
+ * - **Navbar** — home button, Driver Summary toggle, and About modal.
+ * - **Sidebar** — switches between the live Leaderboard and the DriverSummaryPanel
+ *   depending on whether comparison mode is active.
+ * - **Canvas column** — SessionBanner, the animated track canvas, the RaceEventPopup
+ *   overlay, and the PlaybackControls bar.
+ *
+ * Internal state is managed via three custom hooks:
+ * - `useRacePlayback` — frame index, interpolation, play/pause, speed, and seeking.
+ * - `useComparisonMode` — comparison driver selection and historical position data.
+ * - `useTrackStatus` — active track event detection and popup lifecycle.
+ *
+ * @param {RaceViewerProps} props - Component props.
+ * @returns {JSX.Element} The fully composed race viewer layout.
+ */
 export default function RaceViewer({
   trackData, frames, driverColors, driverTeams,
   officialPositions = {},
@@ -78,11 +126,19 @@ export default function RaceViewer({
     trackStatuses,
   );
 
+  /**
+   * Wraps the base restart handler to also clear any lingering track status popup,
+   * ensuring the UI resets cleanly when replaying from the start.
+   */
   const handleRestart = useCallback(() => {
     baseHandleRestart();
     resetStatus();
   }, [baseHandleRestart, resetStatus]);
 
+  /**
+   * Toggles a driver's presence in the focused set.
+   * Adding a driver focuses them; clicking again removes the focus.
+   */
   const handleToggleDriver = useCallback((code: string) => {
     setFocusedDrivers(prev => {
       const next = new Set(prev);

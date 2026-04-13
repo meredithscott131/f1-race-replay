@@ -9,7 +9,6 @@
   grid-template-columns: auto 1fr;
 }
 
-/* Left section: Grand Prix Name + Year */
 .event-section-left {
   background: linear-gradient(to right, var(--color-red) 10%, var(--color-component) 40%);
   border-right: 5px solid var(--color-red);
@@ -30,7 +29,6 @@
   line-height: 1.2;
 }
 
-/* Right section: flag + circuit + weather */
 .event-section-right {
   padding: 0px 0px 0px 15px;
   display: flex;
