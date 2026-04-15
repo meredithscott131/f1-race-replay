@@ -58,16 +58,12 @@ class MessageHandler:
         topic = message.get("topic")
         logger.info(f"Client {client_id} subscribing to {topic}")
 
-        # TODO: Implement topic subscription logic
-
         return {"type": "subscribed", "topic": topic, "client_id": client_id}
 
     async def handle_unsubscribe(self, client_id: str, message: Dict[str, Any]):
         """Handle unsubscribe request"""
         topic = message.get("topic")
         logger.info(f"Client {client_id} unsubscribing from {topic}")
-
-        # TODO: Implement topic unsubscription logic
 
         return {"type": "unsubscribed", "topic": topic, "client_id": client_id}
 
@@ -85,7 +81,6 @@ class MessageHandler:
         return {"type": "broadcast_sent", "session_id": session_id}
 
 
-# Global message handler - INITIALIZE IT HERE
 _message_handler: Optional[MessageHandler] = None
 
 

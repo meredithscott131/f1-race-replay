@@ -74,10 +74,10 @@ class TrackStatus(BaseModel):
     """Track status event (flags, safety car, etc.)"""
 
     status: str = Field(..., description="Status code")
-    start_time: float = Field(..., description="Start time in seconds")  # Removed ge=0 constraint
+    start_time: float = Field(..., description="Start time in seconds")
     end_time: Optional[float] = Field(
         None, description="End time in seconds"
-    )  # Removed ge=0 constraint
+    )
 
     class Config:
         json_schema_extra = {"example": {"status": "2", "start_time": 1250.5, "end_time": 1350.0}}

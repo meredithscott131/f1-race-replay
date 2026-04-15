@@ -17,21 +17,17 @@ from api.websocket.handlers import get_message_handler
 from api.websocket.manager import get_websocket_manager
 from config.settings import get_settings
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Get settings
 settings = get_settings()
 
-# Create FastAPI app
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     debug=settings.debug,
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -45,17 +41,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files
 static_path = settings.get_static_path()
 if static_path.exists():
     app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
-# Include routers
 app.include_router(races.router, prefix="/api/races", tags=["races"])
 app.include_router(telemetry.router, prefix="/api/telemetry", tags=["telemetry"])
 app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
 
-# WebSocket manager
 ws_manager = get_websocket_manager()
 message_handler = get_message_handler()
 

@@ -24,12 +24,10 @@ class CacheManager:
         Args:
             cache_dir: Directory to store cache files (relative to project root)
         """
-        # Get project root (assuming this file is in server/core/)
         project_root = Path(__file__).parent.parent.parent
         self.cache_dir = project_root / cache_dir
         self.cache_dir.mkdir(exist_ok=True)
 
-        # FastF1 cache directory
         self.fastf1_cache_dir = project_root / ".fastf1-cache"
         self.fastf1_cache_dir.mkdir(exist_ok=True)
 
@@ -126,7 +124,6 @@ class CacheManager:
         cache_path = self._get_cache_path(cache_key)
 
         try:
-            # Debug logging
             logger.info(f"Attempting to cache to: {cache_path}")
             logger.info(f"Cache directory exists: {self.cache_dir.exists()}")
 
@@ -232,7 +229,6 @@ class CacheManager:
 
         try:
             for cache_file in self.cache_dir.glob("*_telemetry.pkl"):
-                # Parse filename: YYYY_RXX_S_telemetry.pkl
                 parts = cache_file.stem.replace("_telemetry", "").split("_")
 
                 if len(parts) >= 3:
@@ -251,7 +247,6 @@ class CacheManager:
                         )
                         cached_sessions.append(info)
 
-            # Sort by year and round
             cached_sessions.sort(key=lambda x: (x["year"], x["round"]))
             return cached_sessions
 
@@ -297,7 +292,6 @@ class CacheManager:
         return str(self.fastf1_cache_dir)
 
 
-# Singleton instance
 _cache_manager: Optional[CacheManager] = None
 
 

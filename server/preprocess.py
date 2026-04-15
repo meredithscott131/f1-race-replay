@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from core.f1_data import (  # noqa: E402
+from core.f1_data import (
     enable_cache,
     get_circuit_rotation,
     get_driver_colors,
@@ -45,16 +45,13 @@ def get_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-# ── JSON serialisation ───────────────────────────────────────────────────────
-
-
 def _sanitize(obj):
     """Recursively coerce numpy scalars and NaN/Inf to JSON-safe Python types."""
     if isinstance(obj, dict):
         return {k: _sanitize(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_sanitize(v) for v in obj]
-    if isinstance(obj, np.bool_):  # must be before np.integer check
+    if isinstance(obj, np.bool_):
         return bool(obj)
     if isinstance(obj, np.integer):
         return int(obj)
@@ -76,7 +73,6 @@ def sanitize_frames(frames: list) -> list:
     return _sanitize(frames)
 
 
-# ── Official positions ───────────────────────────────────────────────────────
 
 
 def get_official_positions(session) -> dict[str, int]:
@@ -137,7 +133,7 @@ def get_official_positions(session) -> dict[str, int]:
     return pos
 
 
-# ── Frame flags ──────────────────────────────────────────────────────────────
+
 
 
 def mark_retired_drivers(frames: list, session) -> list:
@@ -225,13 +221,13 @@ def freeze_finishing_positions(frames, total_laps, official_positions=None):
     return frames
 
 
-# ── Main pipeline ────────────────────────────────────────────────────────────
+
 
 
 def process_and_upload(year: int, round: int, supabase: Client, force: bool = False):
     logger.info(f"Processing {year} Round {round}...")
 
-    # ── 0. Skip if already uploaded ─────────────────────────────────────────
+    # 0. Skip if already uploaded
     if not force:
         existing = (
             supabase.table("races").select("id").eq("year", year).eq("round", round).execute()
@@ -240,7 +236,7 @@ def process_and_upload(year: int, round: int, supabase: Client, force: bool = Fa
             logger.info("  Already in DB, skipping. Use --force to overwrite.")
             return
 
-    # ── 1. Track shape (fast, minimal session load) ──────────────────────────
+    # 1. Track shape (fast, minimal session load)
     logger.info("  Loading track shape...")
     session_min = load_session_minimal(year, round, "R")
     track_frames = get_track_shape(session_min)
@@ -259,7 +255,7 @@ def process_and_upload(year: int, round: int, supabase: Client, force: bool = Fa
     }
     logger.info(f"  Track shape: {n} points")
 
-    # ── 2. Full race telemetry ───────────────────────────────────────────────
+    # 2. Full race telemetry
     logger.info("  Processing race frames (this takes a while on first run)...")
     session_full = load_session(year, round, "R")
     telemetry = get_race_telemetry(session_full, "R")
@@ -274,15 +270,15 @@ def process_and_upload(year: int, round: int, supabase: Client, force: bool = Fa
         if code:
             driver_teams[code] = team
 
-    # ── 3. Official finishing positions ──────────────────────────────────────
+    # 3. Official finishing positions
     official_positions = get_official_positions(session_full)
     logger.info(f"  Official positions: {official_positions}")
 
-    # ── 4. Apply flags on full data before downsampling ──────────────────────
+    # 4. Apply flags on full data before downsampling
     all_frames = mark_retired_drivers(all_frames, session_full)
     all_frames = freeze_finishing_positions(all_frames, total_laps, official_positions)
 
-    # ── 5. Downsample to 5000 frames max ─────────────────────────────────────
+    # 5. Downsample to 5000 frames max
     max_frames = 5000
     if len(all_frames) > max_frames:
         step = len(all_frames) / max_frames
@@ -293,7 +289,7 @@ def process_and_upload(year: int, round: int, supabase: Client, force: bool = Fa
     frames_to_store = sanitize_frames(frames_to_store)
     logger.info(f"  Frames: {len(frames_to_store)} (downsampled from {len(all_frames)})")
 
-    # ── 5b. Build track statuses ─────────────────────────────────────────────
+    # 5b. Build track statuses
     track_statuses = []
     status_data = session_full.track_status
     if status_data is not None and not status_data.empty:
@@ -323,7 +319,7 @@ def process_and_upload(year: int, round: int, supabase: Client, force: bool = Fa
             )
     logger.info(f"  Track statuses: {len(track_statuses)} entries")
 
-    # ── 6. Upload to Supabase ────────────────────────────────────────────────
+    # 6. Upload to Supabase
     logger.info("  Uploading to Supabase...")
 
     supabase.table("races").upsert(

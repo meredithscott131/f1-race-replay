@@ -16,8 +16,8 @@ settings = get_settings()
 
 @router.get("/info/{year}/{round}")
 async def get_session_info(
-    year: int = Path(..., ge=2018, le=2025),  # Changed to Path
-    round: int = Path(..., ge=1, le=24),  # Changed to Path
+    year: int = Path(..., ge=2018, le=2025),
+    round: int = Path(..., ge=1, le=24),
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$"),
 ):
     """Get basic session information"""
@@ -61,8 +61,8 @@ async def get_session_types():
 
 @router.get("/validate/{year}/{round}")
 async def validate_session(
-    year: int = Path(..., ge=2018, le=2025),  # Changed to Path
-    round: int = Path(..., ge=1, le=24),  # Changed to Path
+    year: int = Path(..., ge=2018, le=2025),
+    round: int = Path(..., ge=1, le=24),
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$"),
 ):
     """Validate if a session exists"""

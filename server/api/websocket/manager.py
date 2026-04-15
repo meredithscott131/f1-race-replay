@@ -33,7 +33,6 @@ class ConnectionManager:
         }
         logger.info(f"Client {client_id} connected to session {self.session_id}")
 
-        # Send welcome message
         await self.send_personal_message(
             {
                 "type": "connection",
@@ -75,7 +74,6 @@ class ConnectionManager:
                 logger.error(f"Error broadcasting to client: {e}")
                 disconnected.append(connection)
 
-        # Clean up disconnected clients
         for conn in disconnected:
             self.disconnect(conn)
 
@@ -93,7 +91,6 @@ class ConnectionManager:
                 logger.error(f"Error broadcasting text: {e}")
                 disconnected.append(connection)
 
-        # Clean up disconnected clients
         for conn in disconnected:
             self.disconnect(conn)
 
@@ -110,15 +107,12 @@ class WebSocketManager:
     """Global WebSocket manager for all sessions"""
 
     def __init__(self):
-        # Map of session_id -> ConnectionManager
         self.sessions: Dict[str, ConnectionManager] = {}
 
-        # Map of client_id -> (session_id, websocket)
         self.clients: Dict[str, tuple[str, WebSocket]] = {}
 
-        # Heartbeat task
         self._heartbeat_task: Optional[asyncio.Task] = None
-        self._heartbeat_interval = 30  # seconds
+        self._heartbeat_interval = 30
 
     def get_or_create_session(self, session_id: str) -> ConnectionManager:
         """Get or create a ConnectionManager for a session"""
@@ -129,16 +123,12 @@ class WebSocketManager:
 
     async def connect(self, client_id: str, websocket: WebSocket, session_id: str = "default"):
         """Connect a client to a session"""
-        # Get or create session manager
         session_manager = self.get_or_create_session(session_id)
 
-        # Connect to session
         await session_manager.connect(websocket, client_id)
 
-        # Track client globally
         self.clients[client_id] = (session_id, websocket)
 
-        # Start heartbeat if not running
         if self._heartbeat_task is None or self._heartbeat_task.done():
             self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
 
@@ -147,16 +137,13 @@ class WebSocketManager:
         if client_id in self.clients:
             session_id, websocket = self.clients[client_id]
 
-            # Disconnect from session
             if session_id in self.sessions:
                 self.sessions[session_id].disconnect(websocket)
 
-                # Remove empty sessions
                 if self.sessions[session_id].get_connection_count() == 0:
                     del self.sessions[session_id]
                     logger.info(f"Removed empty session: {session_id}")
 
-            # Remove from global tracking
             del self.clients[client_id]
 
     async def send_to_client(self, client_id: str, message: dict):
@@ -202,7 +189,6 @@ class WebSocketManager:
                 await asyncio.sleep(self._heartbeat_interval)
 
                 if self.get_total_connections() == 0:
-                    # No clients, stop heartbeat
                     logger.info("No active connections, stopping heartbeat")
                     break
 
@@ -219,7 +205,6 @@ class WebSocketManager:
                 logger.error(f"Error in heartbeat loop: {e}")
 
 
-# Global WebSocket manager instance
 _ws_manager: Optional[WebSocketManager] = None
 
 

@@ -20,11 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 def enable_cache():
-    # Check if cache folder exists
     if not os.path.exists(".fastf1-cache"):
         os.makedirs(".fastf1-cache")
 
-    # Enable local cache
     fastf1.Cache.enable_cache(".fastf1-cache")
 
 
@@ -198,9 +196,6 @@ def load_session(year, round_number, session_type="R"):
     session.load(telemetry=True, weather=True, messages=False)  # skip messages
     return session
 
-
-# The following functions require a loaded session object
-
 _FALLBACK_PALETTE = [
     [229, 4, 17],  # red
     [0, 160, 222],  # blue
@@ -223,32 +218,6 @@ _FALLBACK_PALETTE = [
     [255, 0, 128],  # hot pink
     [128, 255, 0],  # lime
 ]
-
-# ── REPLACE with this (palette at module level, function below it): ───────────
-
-_FALLBACK_PALETTE = [
-    [229, 4, 17],
-    [0, 160, 222],
-    [0, 210, 190],
-    [255, 135, 0],
-    [220, 0, 255],
-    [0, 234, 91],
-    [255, 215, 0],
-    [255, 255, 255],
-    [180, 0, 0],
-    [0, 90, 180],
-    [100, 200, 100],
-    [255, 180, 0],
-    [200, 100, 255],
-    [0, 180, 130],
-    [255, 80, 80],
-    [80, 80, 255],
-    [200, 200, 0],
-    [0, 200, 255],
-    [255, 0, 128],
-    [128, 255, 0],
-]
-
 
 def get_driver_colors(session) -> dict:
     try:

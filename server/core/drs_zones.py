@@ -31,7 +31,6 @@ def extract_drs_zones_from_telemetry(telemetry_df) -> List[Dict[str, int]]:
 
     # Iterate through DRS values
     for i, drs_val in enumerate(telemetry_df["DRS"]):
-        # DRS active when value is 10, 12, or 14
         if drs_val in [10, 12, 14]:
             if drs_start is None:
                 drs_start = i
@@ -41,7 +40,6 @@ def extract_drs_zones_from_telemetry(telemetry_df) -> List[Dict[str, int]]:
                 drs_zones.append({"start_index": int(drs_start), "end_index": int(drs_end)})
                 drs_start = None
 
-    # Handle case where DRS zone extends to end of lap
     if drs_start is not None:
         drs_zones.append({"start_index": int(drs_start), "end_index": int(len(telemetry_df) - 1)})
 

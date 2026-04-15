@@ -13,9 +13,9 @@ from core.f1_data import (
     get_circuit_rotation,
     get_driver_colors,
     get_race_telemetry,
-    get_track_shape,  # add this import
+    get_track_shape,
     load_session,
-    load_session_minimal,  # add this import
+    load_session_minimal,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ settings = get_settings()
 cache = get_cache_manager()
 
 
-@router.get("/race/{year}/{round}")  # Remove response_model=TelemetryData
+@router.get("/race/{year}/{round}")
 async def get_race_telemetry_data(
     year: int = Path(..., ge=2019, le=2025),
     round: int = Path(..., ge=1, le=24),
@@ -75,8 +75,8 @@ async def get_race_telemetry_data(
 
 @router.get("/status/{year}/{round}", response_model=TelemetryStatusResponse)
 async def get_telemetry_status(
-    year: int = Path(..., ge=2018, le=2025),  # Changed to Path
-    round: int = Path(..., ge=1, le=24),  # Changed to Path
+    year: int = Path(..., ge=2018, le=2025),
+    round: int = Path(..., ge=1, le=24),
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$"),
 ):
     """Check if telemetry data is cached"""
@@ -103,8 +103,8 @@ async def get_telemetry_status(
 
 @router.get("/cache/info/{year}/{round}", response_model=CacheInfoResponse)
 async def get_cache_info_endpoint(
-    year: int = Path(...),  # Changed to Path
-    round: int = Path(...),  # Changed to Path
+    year: int = Path(...),
+    round: int = Path(...),
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$"),
 ):
     """Get detailed cache information"""
@@ -136,8 +136,8 @@ async def list_cached_sessions():
 
 @router.delete("/cache/{year}/{round}")
 async def clear_session_cache(
-    year: int = Path(...),  # Changed to Path
-    round: int = Path(...),  # Changed to Path
+    year: int = Path(...),
+    round: int = Path(...),
     session_type: str = Query("R", regex="^(R|S|Q|SQ)$"),
 ):
     """Clear cache for a specific session"""
@@ -184,13 +184,11 @@ async def get_track_data(
     try:
         logger.info(f"Loading track shape: {year} R{round} {session_type}")
 
-        # Fast path: only load laps + position, skip weather/messages
         session = load_session_minimal(year, round, session_type)
 
         track_frames = get_track_shape(session)
         logger.info(f"Extracted {len(track_frames)} track shape points")
 
-        # Hardcoded DRS zones (proportional to track length)
         n = len(track_frames)
         drs_zones = [
             {"start_index": int(n * 0.15), "end_index": int(n * 0.25)},
@@ -246,7 +244,7 @@ def _build_session_info(session, year: int, round: int) -> dict:
 
 @router.get("/frames/{year}/{round}")
 async def get_race_frames(
-    year: int = Path(..., ge=2019, le=2025),  # was ge=2018
+    year: int = Path(..., ge=2019, le=2025),
     round: int = Path(..., ge=1, le=24),
     session_type: str = Query("R", regex="^(R|S)$"),
     max_frames: int = Query(5000, ge=100, le=50000),
@@ -265,7 +263,6 @@ async def get_race_frames(
         all_frames = cached_data.get("frames", [])
         driver_colors = cached_data.get("driver_colors", {})
 
-        # Get team info from session
         session = load_session(year, round, session_type)
         driver_teams = {}
 
@@ -277,7 +274,6 @@ async def get_race_frames(
 
         logger.info(f"Driver teams: {driver_teams}")
 
-        # Sample frames
         if len(all_frames) > max_frames:
             step = len(all_frames) / max_frames
             sampled_frames = [all_frames[int(i * step)] for i in range(max_frames)]

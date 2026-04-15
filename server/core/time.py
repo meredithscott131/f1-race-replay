@@ -1,72 +1,35 @@
-import re
-from typing import Optional
+# Mapping of tyre compound names to their integer IDs used throughout the
+# telemetry pipeline and the frontend renderer.
+# The integer values must stay in sync with the TYRE_COMPOUNDS constant in
+# the TypeScript client (src/components/Dashboard/Leaderboard/index.tsx).
+tyre_compounds_ints: dict[str, int] = {
+    "SOFT":         0,
+    "MEDIUM":       1,
+    "HARD":         2,
+    "INTERMEDIATE": 3,
+    "WET":          4,
+}
 
-# convert time in seconds to a MM:SS.sss format
 
-
-def format_time(seconds: float) -> str:
-    if seconds is None or seconds < 0:
-        return "N/A"
-    minutes = int(seconds // 60)
-    secs = seconds % 60
-    return f"{minutes:02}:{secs:06.3f}"
-
-
-def parse_time_string(time_str: str) -> Optional[float]:
+def get_tyre_compound_int(compound_str: str) -> int:
     """
-    Parse strings like:
-      - "00:01:26:123000"
-      - "00:01:26.123000"
-      - "01:26.123"
-      - "01:26"
-    and return total seconds as float. Returns None if parsing fails.
+    Convert a tyre compound name to its integer ID.
+
+    The lookup is case-insensitive. Returns ``-1`` for any compound name that
+    is not present in ``tyre_compounds_ints`` (e.g. ``"UNKNOWN"`` or an empty
+    string), so callers can treat negative values as a sentinel for missing data.
     """
-    # Handle timedelta format like "0 days 00:01:27.060000"
-    if "days" in str(time_str):
-        time_str = str(time_str).split(" ", 2)[-1]  # Take the time part after "X days "
-    else:
-        time_str = str(time_str).split(" ")[0]  # Remove any trailing text after space
+    return int(tyre_compounds_ints.get(compound_str.upper(), -1))
 
-    if time_str is None:
-        print("1parse_time_string output: None")
-        return None
 
-    s = str(time_str).strip()
-    if s == "":
-        print("2parse_time_string output: None")
-        return None
+def get_tyre_compound_str(compound_int: int) -> str:
+    """
+    Convert a tyre compound integer ID back to its canonical name.
 
-    # Split on colon or dot
-    parts = re.split(r"[:.]", s)
-    # Normalize to hh, mm, ss, micro
-    hh = 0
-    micro = 0
-
-    try:
-        if len(parts) == 4:
-            hh, mm, ss, micro = parts
-        elif len(parts) == 3:
-            # Ambiguity: could be HH:MM:SS OR MM:SS:micro
-            # Decide by examining the last part length: if > 2 digits it's probably microseconds
-            if len(parts[2]) > 2:
-                mm, ss, micro = parts
-            else:
-                hh, mm, ss = parts
-        elif len(parts) == 2:
-            mm, ss = parts
-        else:
-            print("3parse_time_string output: None")
-            return None
-
-        hh = int(hh)
-        mm = int(mm)
-        ss = int(ss)
-        micro = int(str(micro)[:6].ljust(6, "0")) if micro is not None and str(micro) != "" else 0
-
-        total_seconds = hh * 3600 + mm * 60 + ss + micro / 1_000_000.0
-
-        return round(total_seconds, 3)
-    except Exception as e:
-        print("Exception in parse_time_string:", e)
-        print("4parse_time_string output: None")
-        return None
+    Performs a linear scan of ``tyre_compounds_ints`` and returns the first
+    key whose value matches ``compound_int``.
+    """
+    for k, v in tyre_compounds_ints.items():
+        if v == compound_int:
+            return k
+    return "UNKNOWN"

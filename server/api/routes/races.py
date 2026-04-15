@@ -31,7 +31,7 @@ async def get_available_years():
 
 @router.get("/schedule/{year}", response_model=List[RaceWeekend])
 async def get_race_schedule(
-    year: int = Path(..., ge=2018, le=2025, description="Season year"),  # Changed Query to Path
+    year: int = Path(..., ge=2018, le=2025, description="Season year"),
 ):
     """
     Get race schedule for a specific year
@@ -48,8 +48,8 @@ async def get_race_schedule(
 
 @router.get("/schedule/{year}/{round}", response_model=RaceWeekend)
 async def get_race_weekend(
-    year: int = Path(..., ge=2018, le=2025),  # Changed Query to Path
-    round: int = Path(..., ge=1, le=24, description="Round number"),  # Changed Query to Path
+    year: int = Path(..., ge=2018, le=2025),
+    round: int = Path(..., ge=1, le=24, description="Round number"),
 ):
     """
     Get details for a specific race weekend

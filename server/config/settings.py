@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_prefix: str = "/api"
 
-    # CORS Settings - Simple list, no complex parsing
+    # CORS Settings
     cors_origins: List[str] = [
         "http://localhost:5173",
         "http://localhost:3000",
@@ -71,7 +71,7 @@ class Settings(BaseSettings):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         v_upper = v.upper()
         if v_upper not in valid_levels:
-            return "INFO"  # Default instead of error
+            return "INFO"
         return v_upper
 
     def get_cache_path(self) -> Path:
@@ -116,4 +116,4 @@ def reload_settings():
 def get_allowed_years(self) -> list[int]:
     # 2018 and earlier lack position_data on the FastF1 livetiming source.
     # 2019 works partially; 2020+ is reliable.
-    return list(range(2019, 2025))  # was range(2018, 2025)
+    return list(range(2019, 2025))
