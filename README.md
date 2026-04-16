@@ -1,5 +1,7 @@
 # 🏎️ F1 Race Replay
 
+🔗 **[View Live App](https://meredithscott131.github.io/f1-race-replay)**
+
 > **Forked from [IAmTomShaw/f1-race-replay](https://github.com/IAmTomShaw/f1-race-replay).**  
 > This fork migrates the project to a full-stack React + TypeScript architecture while preserving the original Python data pipeline.
 
@@ -10,10 +12,10 @@ A Formula 1 race visualisation web app that transforms real telemetry data into 
 ## Screenshots
 
 ### Race Selection
-<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/screen-1.png" alt="Race selection screen">
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/race-selection.png" alt="Race selection screen">
 
 ### Race Dashboard
-<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/screen-2.png" alt="Race dashboard screen">
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/race-dashboard.png" alt="Race dashboard screen">
 
 ## Features
 
