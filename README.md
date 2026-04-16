@@ -12,12 +12,10 @@ A Formula 1 race visualisation web app that transforms real telemetry data into 
 ## Screenshots
 
 ### Race Selection
-<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/screen-1.png" alt="Race selection screen" width="500">
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/screen-1.png" alt="Race selection screen">
 
 ### Race Dashboard
-<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/screen-2.png" alt="Race dashboard screen" width="500">
-
----
+<img src="https://github.com/meredithscott131/f1-race-replay/blob/main/shared/images/screen-2.png" alt="Race dashboard screen">
 
 ## Features
 
@@ -44,14 +42,10 @@ A Formula 1 race visualisation web app that transforms real telemetry data into 
 - Live weather strip (air temp, track temp, humidity, wind speed)
 - Race event popup notifications for flags and safety car periods
 
----
-
 ## Known Limitations
 
 - **Data availability** — due to Supabase free-tier storage limits, the app currently holds 9 races across the 2022–2024 seasons.
 - **First and last lap positions** — position accuracy is reduced on lap 1 and the final lap. This is a known issue inherited from the original project and is actively being investigated.
-
----
 
 ## Running Locally
 
