@@ -1,0 +1,47 @@
+.track-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-text);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.track-cell-flag {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.track-cell-info {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.track-cell-name {
+  font-size: var(--font-size-header);
+  font-family: var(--font-header);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.12s;
+}
+
+.track-cell-meta {
+  font-size: var(--font-size-text);
+  color: var(--color-grey-light);
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+
+.track-cell-image {
+  width: 24px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
