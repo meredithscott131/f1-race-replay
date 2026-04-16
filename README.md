@@ -7,8 +7,6 @@ A Formula 1 race visualisation web app that transforms real telemetry data into 
 
 > ⚠️ **Active development** — features and data availability are subject to change.
 
----
-
 ## Screenshots
 
 ### Race Selection
