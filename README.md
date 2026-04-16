@@ -46,19 +46,3 @@ A Formula 1 race visualisation web app that transforms real telemetry data into 
 
 - **Data availability** — due to Supabase free-tier storage limits, the app currently holds 9 races across the 2022–2024 seasons.
 - **First and last lap positions** — position accuracy is reduced on lap 1 and the final lap. This is a known issue inherited from the original project and is actively being investigated.
-
-## Running Locally
-
-**Backend**
-```bash
-cd server
-pip install -r requirements.txt
-python run.py
-```
-
-**Frontend**
-```bash
-cd client
-npm install
-npm run dev
-```
