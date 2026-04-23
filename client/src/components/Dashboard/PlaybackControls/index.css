@@ -494,3 +494,29 @@
   opacity: 0.4;
   white-space: nowrap;
 }
+
+.race-nav-btn-left,
+.race-nav-btn-right {
+  background-color: var(--color-component);
+  border: var(--component-border-weight) solid var(--color-outline);
+  flex-direction: row;
+  gap: 2px;
+  width: auto;
+  height: auto;
+  align-self: stretch;
+  padding: 0 10px;
+  opacity: 0.4;
+}
+
+.race-nav-btn-left {
+  border-radius: 0 0 0 var(--radius-md);
+}
+
+.race-nav-btn-right {
+  border-radius: 0 0 var(--radius-md) 0;
+}
+
+.race-nav-btn-left:not(:disabled),
+.race-nav-btn-right:not(:disabled) {
+  opacity: 1;
+}

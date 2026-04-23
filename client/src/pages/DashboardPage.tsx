@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const {
     eventName, circuitName, country, totalLaps,
     trackData, frames, driverColors, driverTeams, officialPositions, trackStatuses,
+    prevTrackFrames, nextTrackFrames,
     loading, error,
     hasPrevRace, hasNextRace,
     prevRace, nextRace,
@@ -49,20 +50,18 @@ export default function DashboardPage() {
 
   /**
    * Clears all loaded race data and navigates back to the race selection screen.
-   * Calling `reset()` before navigating ensures stale data isn't briefly visible
-   * if the user returns to the dashboard for a different race.
    */
   const handleGoHome = () => {
     reset();
     navigate('/f1-race-replay');
   };
 
-  /** Navigates to the previous race in the cross-season list; no-ops when `prevRace` is null. */
+  /** Navigates to the previous race in the cross-season list. */
   const handlePrevRace = () => {
     if (prevRace) navigate(`/f1-race-replay/race/${prevRace.year}/${prevRace.round}`);
   };
 
-  /** Navigates to the next race in the cross-season list; no-ops when `nextRace` is null. */
+  /** Navigates to the next race in the cross-season list. */
   const handleNextRace = () => {
     if (nextRace) navigate(`/f1-race-replay/race/${nextRace.year}/${nextRace.round}`);
   };
@@ -107,6 +106,8 @@ export default function DashboardPage() {
       totalLaps={totalLaps}
       officialPositions={officialPositions}
       trackStatuses={trackStatuses}
+      prevTrackFrames={prevTrackFrames}
+      nextTrackFrames={nextTrackFrames}
       hasPrevRace={hasPrevRace}
       hasNextRace={hasNextRace}
       onHome={handleGoHome}
