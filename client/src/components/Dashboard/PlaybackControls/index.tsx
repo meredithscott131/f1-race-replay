@@ -10,18 +10,22 @@ import './index.css';
  * @property {number} currentFrame - Index of the frame currently being displayed.
  * @property {number} totalFrames - Total number of frames in the replay.
  * @property {number} [totalLaps] - Total laps in the race; enables the lap navigator when > 0.
- * @property {number[]} [lapFrameIndices] - Frame index at which each lap begins; used to render tick marks and lap seeks.
- * @property {TrackStatus[]} [trackStatuses] - Array of track status intervals rendered as colored segments on the progress bar.
- * @property {number} [totalTime] - Total race duration in seconds; required to position status segments correctly.
+ * @property {number[]} [lapFrameIndices] - Frame index at which each lap begins.
+ * @property {TrackStatus[]} [trackStatuses] - Track status intervals rendered as colored segments.
+ * @property {number} [totalTime] - Total race duration in seconds.
+ * @property {{ x: number; y: number }[]} [prevTrackFrames] - Reference-lap XY points for the
+ *   previous race circuit, used to render a mini track map inside the prev-race button.
+ * @property {{ x: number; y: number }[]} [nextTrackFrames] - Reference-lap XY points for the
+ *   next race circuit, used to render a mini track map inside the next-race button.
  * @property {() => void} onPlayPause - Callback to toggle play/pause.
  * @property {(speed: number) => void} onSpeedChange - Callback fired with the new speed multiplier.
  * @property {(frame: number) => void} onSeek - Callback to jump to a specific frame index.
- * @property {(lap: number) => void} onSeekToLap - Callback to jump to the start frame of a given lap.
+ * @property {(lap: number) => void} onSeekToLap - Callback to jump to the start of a lap.
  * @property {() => void} onRestart - Callback to restart replay from frame 0.
  * @property {() => void} [onPrevRace] - Optional callback to load the previous race.
  * @property {() => void} [onNextRace] - Optional callback to load the next race.
- * @property {boolean} [hasPrevRace] - Whether a previous race is available; disables the button when false.
- * @property {boolean} [hasNextRace] - Whether a next race is available; disables the button when false.
+ * @property {boolean} [hasPrevRace] - Whether a previous race is available.
+ * @property {boolean} [hasNextRace] - Whether a next race is available.
  */
 interface PlaybackControlsProps {
   isPaused: boolean;
@@ -32,6 +36,8 @@ interface PlaybackControlsProps {
   lapFrameIndices?: number[];
   trackStatuses?: TrackStatus[];
   totalTime?: number;
+  prevTrackFrames?: { x: number; y: number }[];
+  nextTrackFrames?: { x: number; y: number }[];
   onPlayPause: () => void;
   onSpeedChange: (speed: number) => void;
   onSeek: (frame: number) => void;
@@ -45,7 +51,6 @@ interface PlaybackControlsProps {
 
 /**
  * Maps track status codes to their display color and human-readable label.
- * Used to render colored segments on the progress bar and as tooltip text.
  */
 const STATUS_STYLES: Record<string, { color: string; label: string }> = {
   '2': { color: '#FFD700', label: 'Yellow Flag'        },
@@ -56,20 +61,68 @@ const STATUS_STYLES: Record<string, { color: string; label: string }> = {
 };
 
 /**
+ * Renders a miniature SVG outline of a race circuit from world-space XY reference-lap points.
+ *
+ * @param {object} props
+ * @param {{ x: number; y: number }[]} [props.frames] - World-space XY samples from the
+ *   reference lap stored in {@code TrackDataResponse.frames}. When absent or empty,
+ *   the component renders nothing.
+ * @returns {JSX.Element | null} A scaled {@code <polyline>} SVG of the circuit outline,
+ *   or {@code null} if {@code frames} is undefined or empty.
+ */
+function MiniTrackSVG({ frames }: { frames?: { x: number; y: number }[] }) {
+  const SIZE = 26;
+  const PADDING = 2;
+  const INNER = SIZE - PADDING * 2;
+
+  if (!frames || frames.length === 0) {
+    return null;
+  }
+
+  const xs = frames.map(f => f.x);
+  const ys = frames.map(f => f.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+
+  const scale = INNER / Math.max(rangeX, rangeY);
+  const offsetX = PADDING + (INNER - rangeX * scale) / 2;
+  const offsetY = PADDING + (INNER - rangeY * scale) / 2;
+
+  const points = frames.map(f => {
+    const sx =  (f.x - minX) * scale + offsetX;
+    const sy = -(f.y - minY) * scale + (SIZE - offsetY);
+    return `${sx.toFixed(1)},${sy.toFixed(1)}`;
+  }).join(" ");
+
+  return (
+    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} fill="none">
+      <polyline
+        points={points}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/**
  * PlaybackControls renders the full replay control bar, including:
  * - A clickable progress bar with lap tick marks and colored track-status segments.
  * - Transport buttons: restart, rewind 250 frames, play/pause, forward 250 frames.
  * - A speed selector (decrease / current value / increase).
- * - An optional lap navigator (previous lap, direct input, next lap) shown when `totalLaps > 0`.
- * - Previous/next race navigation buttons on either side of the control strip.
- *
- * @param {PlaybackControlsProps} props - Component props.
- * @returns {JSX.Element} The rendered playback control bar.
+ * - An optional lap navigator shown when `totalLaps > 0`.
+ * - Previous/next race buttons each containing a mini map of that circuit above a
+ *   directional arrow (falls back to a generic oval when no frames are provided).
  */
 export default function PlaybackControls({
   isPaused, playbackSpeed, currentFrame, totalFrames,
   totalLaps = 0, lapFrameIndices = [],
   trackStatuses = [], totalTime = 0,
+  prevTrackFrames, nextTrackFrames,
   onPlayPause, onSpeedChange, onSeek, onSeekToLap, onRestart,
   onPrevRace, onNextRace, hasPrevRace = false, hasNextRace = false,
 }: PlaybackControlsProps) {
@@ -114,7 +167,6 @@ export default function PlaybackControls({
           </div>
         )}
 
-        {/* Progress fill, lap tick marks, and draggable handle */}
         <div className="progress-bar">
           <div className="progress-fill" style={{ width: `${progress}%` }} />
           {totalFrames > 0 && lapFrameIndices.map((frameIdx, i) => {
@@ -137,9 +189,12 @@ export default function PlaybackControls({
 
       {/* ── Controls row ── */}
       <div className="controls-row">
+
+        {/* ── Previous race button: mini map above left-arrow ── */}
         <button className="control-btn race-nav-btn-left" onClick={onPrevRace}
           disabled={!hasPrevRace} title="Previous Race">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <MiniTrackSVG frames={prevTrackFrames} />
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
           </svg>
         </button>
@@ -211,12 +266,15 @@ export default function PlaybackControls({
           )}
         </div>
 
+        {/* ── Next race button: right-arrow above mini map ── */}
         <button className="control-btn race-nav-btn-right" onClick={onNextRace}
           disabled={!hasNextRace} title="Next Race">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 18l8.5-6L6 6v12zm9-12v12h2V6h-2z"/>
           </svg>
+          <MiniTrackSVG frames={nextTrackFrames} />
         </button>
+
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { telemetryService } from '../services/telemetryService';
 import { buildTrackFromFrames } from '../utils/trackDataConverter';
-import type { TrackData } from '../types/track.types';
+import type { TrackData } from '../types/track-api.types';
 import type { Frame, TrackStatus } from '../types/api.types';
 
 /** A minimal race identifier used to build and navigate the cross-season race list. */
@@ -16,6 +16,10 @@ interface RaceRef { year: number; round: number; }
  * 1. `getTrackData` — circuit geometry, session metadata, and track status intervals.
  * 2. `getRaceFrames` — per-frame telemetry, driver colors, teams, and official positions.
  *
+ * Additionally, whenever the adjacent races change, a lightweight `getTrackData`
+ * call is fired for each neighbour so their circuit outlines can be previewed
+ * inside the prev/next race navigation buttons.
+ *
  * @returns {{
  *   selectedYear: number,
  *   selectedRound: number,
@@ -29,6 +33,8 @@ interface RaceRef { year: number; round: number; }
  *   driverTeams: Record<string, string>,
  *   officialPositions: Record<string, number>,
  *   trackStatuses: TrackStatus[],
+ *   prevTrackFrames: { x: number; y: number }[] | undefined,
+ *   nextTrackFrames: { x: number; y: number }[] | undefined,
  *   loading: boolean,
  *   error: string | null,
  *   hasPrevRace: boolean,
@@ -60,6 +66,11 @@ export function useRaceLoader() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
+  /** XY points from the previous race's reference lap, for the mini map button. */
+  const [prevTrackFrames, setPrevTrackFrames] = useState<{ x: number; y: number }[] | undefined>(undefined);
+  /** XY points from the next race's reference lap, for the mini map button. */
+  const [nextTrackFrames, setNextTrackFrames] = useState<{ x: number; y: number }[] | undefined>(undefined);
+
   /**
    * Ref holding an interval timer ID used during loading animations.
    * Cleared on unmount to prevent updates on an unmounted component.
@@ -68,6 +79,41 @@ export function useRaceLoader() {
   useEffect(() => () => {
     if (loadingIntervalRef.current) clearInterval(loadingIntervalRef.current);
   }, []);
+
+  // Derived navigation state
+  const currentRaceIdx = allRaces.findIndex(
+    r => r.year === selectedYear && r.round === selectedRound
+  );
+  const prevRace = currentRaceIdx > 0 ? allRaces[currentRaceIdx - 1] : null;
+  const nextRace = currentRaceIdx < allRaces.length - 1 ? allRaces[currentRaceIdx + 1] : null;
+
+  /**
+   * Whenever the previous adjacent race changes, fetch its track shape so the
+   * mini map can be rendered inside the prev-race button. Clears immediately on
+   * change so a stale outline is never shown for the wrong circuit.
+   */
+  useEffect(() => {
+    setPrevTrackFrames(undefined);
+    if (!prevRace) return;
+    let cancelled = false;
+    telemetryService.getTrackData(prevRace.year, prevRace.round)
+      .then(r => { if (!cancelled) setPrevTrackFrames(r.frames); })
+      .catch(() => { if (!cancelled) setPrevTrackFrames(undefined); });
+    return () => { cancelled = true; };
+  }, [prevRace?.year, prevRace?.round]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Same as above for the next adjacent race.
+   */
+  useEffect(() => {
+    setNextTrackFrames(undefined);
+    if (!nextRace) return;
+    let cancelled = false;
+    telemetryService.getTrackData(nextRace.year, nextRace.round)
+      .then(r => { if (!cancelled) setNextTrackFrames(r.frames); })
+      .catch(() => { if (!cancelled) setNextTrackFrames(undefined); });
+    return () => { cancelled = true; };
+  }, [nextRace?.year, nextRace?.round]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Fetches all available season years and their race schedules, then flattens
@@ -149,13 +195,6 @@ export function useRaceLoader() {
     }
   };
 
-  const currentRaceIdx = allRaces.findIndex(
-    r => r.year === selectedYear && r.round === selectedRound
-  );
-
-  const prevRace = currentRaceIdx > 0 ? allRaces[currentRaceIdx - 1] : null;
-  const nextRace = currentRaceIdx < allRaces.length - 1 ? allRaces[currentRaceIdx + 1] : null;
-
   /**
    * Selects a new race, refreshes the full race list, and triggers a data load.
    * This is the primary public entry point for race selection (from the picker or
@@ -187,6 +226,7 @@ export function useRaceLoader() {
     selectedYear, selectedRound,
     eventName, circuitName, country, totalLaps,
     trackData, frames, driverColors, driverTeams, officialPositions, trackStatuses,
+    prevTrackFrames, nextTrackFrames,
     loading, error,
     hasPrevRace: prevRace !== null,
     hasNextRace: nextRace !== null,

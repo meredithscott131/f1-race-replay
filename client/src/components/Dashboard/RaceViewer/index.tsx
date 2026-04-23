@@ -9,7 +9,7 @@ import SessionBanner from '../SessionBanner';
 import { useRacePlayback } from '../../../hooks/useRacePlayback';
 import { useComparisonMode } from '../../../hooks/useComparisonMode';
 import { useTrackStatus } from '../../../hooks/useTrackStatus';
-import type { TrackData } from '../../../types/track.types';
+import type { TrackData } from '../../../types/track-api.types';
 import type { Frame, TrackStatus } from '../../../types/api.types';
 import './index.css';
 
@@ -27,6 +27,11 @@ import './index.css';
  * @property {string} [country] - Country of the event, shown in the SessionBanner.
  * @property {number} [year] - Season year; hidden from the SessionBanner while comparison mode is active.
  * @property {number} [totalLaps] - Total scheduled laps, passed to the leaderboard and playback controls.
+ * @property {{ x: number; y: number }[]} [prevTrackFrames] - World-space XY reference-lap points for
+ *   the previous race circuit, forwarded to PlaybackControls to render a mini track map in the
+ *   prev-race button. Sliced from `TrackDataResponse.frames` by the caller.
+ * @property {{ x: number; y: number }[]} [nextTrackFrames] - World-space XY reference-lap points for
+ *   the next race circuit, forwarded to PlaybackControls for the next-race button mini map.
  * @property {() => void} onHome - Callback to navigate back to the race selection screen.
  * @property {() => void} [onPrevRace] - Optional callback to load the previous race session.
  * @property {() => void} [onNextRace] - Optional callback to load the next race session.
@@ -45,6 +50,8 @@ interface RaceViewerProps {
   country?: string;
   year?: number;
   totalLaps?: number;
+  prevTrackFrames?: { x: number; y: number }[];
+  nextTrackFrames?: { x: number; y: number }[];
   onHome: () => void;
   onPrevRace?: () => void;
   onNextRace?: () => void;
@@ -85,24 +92,16 @@ function deriveLeaderCode(
 /**
  * RaceViewer is the top-level race replay screen. It composes all major UI regions:
  * - **Navbar** — home button, Driver Summary toggle, and About modal.
- * - **Sidebar** — switches between the live Leaderboard and the DriverSummaryPanel
- *   depending on whether comparison mode is active.
- * - **Canvas column** — SessionBanner, the animated track canvas, the RaceEventPopup
- *   overlay, and the PlaybackControls bar.
- *
- * Internal state is managed via three custom hooks:
- * - `useRacePlayback` — frame index, interpolation, play/pause, speed, and seeking.
- * - `useComparisonMode` — comparison driver selection and historical position data.
- * - `useTrackStatus` — active track event detection and popup lifecycle.
- *
- * @param {RaceViewerProps} props - Component props.
- * @returns {JSX.Element} The fully composed race viewer layout.
+ * - **Sidebar** — switches between the live Leaderboard and the DriverSummaryPanel.
+ * - **Canvas column** — SessionBanner, animated track canvas, RaceEventPopup overlay,
+ *   and the PlaybackControls bar (which shows mini circuit maps for adjacent races).
  */
 export default function RaceViewer({
   trackData, frames, driverColors, driverTeams,
   officialPositions = {},
   trackStatuses = [],
   eventName, circuitName, country, year, totalLaps,
+  prevTrackFrames, nextTrackFrames,
   onHome,
   onPrevRace, onNextRace, hasPrevRace = false, hasNextRace = false,
 }: RaceViewerProps) {
@@ -126,10 +125,6 @@ export default function RaceViewer({
     trackStatuses,
   );
 
-  /**
-   * Wraps the base restart handler to also clear any lingering track status popup,
-   * ensuring the UI resets cleanly when replaying from the start.
-   */
   const handleRestart = useCallback(() => {
     baseHandleRestart();
     resetStatus();
@@ -142,11 +137,7 @@ export default function RaceViewer({
   const handleToggleDriver = useCallback((code: string) => {
     setFocusedDrivers(prev => {
       const next = new Set(prev);
-      if (next.has(code)) {
-        next.delete(code);
-      } else {
-        next.add(code);
-      }
+      if (next.has(code)) { next.delete(code); } else { next.add(code); }
       return next;
     });
   }, []);
@@ -209,6 +200,8 @@ export default function RaceViewer({
             currentFrame={currentFrameIndex} totalFrames={frames.length}
             totalLaps={totalLaps} lapFrameIndices={lapFrameIndices}
             trackStatuses={isComparisonMode ? [] : trackStatuses} totalTime={totalTime}
+            prevTrackFrames={prevTrackFrames}
+            nextTrackFrames={nextTrackFrames}
             onPlayPause={handlePlayPause} onSpeedChange={handleSpeedChange}
             onSeek={handleSeek} onSeekToLap={handleSeekToLap}
             onRestart={handleRestart}
